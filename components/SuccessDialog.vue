@@ -27,17 +27,13 @@ const handleClose = () => {
 </script>
 
 <template>
-  <VDialog
-    v-model="modelValueLocal"
-    max-width="420"
-    persistent
-  >
+  <VDialog v-model="modelValueLocal" max-width="420" persistent>
     <VCard class="pa-1">
       <!-- Title -->
       <VCardTitle class="text-h6 px-0">
         <div class="d-flex align-center justify-end">
           <div class="px-2">
-            <IconBtn variant="text" color="secondary" size="x-small"  @click="handleClose">
+            <IconBtn variant="text" color="secondary" size="x-small" @click="handleClose">
               <VIcon icon="ri-close-line" />
             </IconBtn>
           </div>
@@ -50,16 +46,11 @@ const handleClose = () => {
 
       <VCardText>
         <h3 class="text-center mb-3">{{ title }}</h3>
-        <p class="text-body-2 ma-0">{{ message }}</p>
+        <p class="text-body-2 text-center ma-0">{{ message }}</p>
       </VCardText>
 
       <VCardActions class="justify-end gap-2">
-        <VBtn
-          color="secondary"
-          variant="text"
-          size="small"
-          @click="handleClose"
-        >
+        <VBtn color="secondary" variant="text" size="small" @click="handleClose">
           OK
         </VBtn>
       </VCardActions>

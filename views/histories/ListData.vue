@@ -1,183 +1,146 @@
 <script setup lang="ts">
-import qris from '@images/pages/qris.png';
-import { onMounted, ref } from 'vue';
+const props = defineProps<{
+  items: any[]
+  loading: boolean
+  hasMore: boolean
+}>()
 
 const emit = defineEmits<{
-  (e: 'showHistoryPayment', item: object): void;
-  (e: 'showBuktiBayar'): void;
-}>();
+  (e: 'showBuktiBayar', src: string): void
+  (e: 'loadMore'): void
+}>()
 
-// Dummy data simulasi API
-const allDummyData = Array.from({ length: 100 }, (_, i) => ({
-  id: i + 1,
-  nama: `Warga #${i + 1}`,
-  info: i % 2 === 0 ? 'Notifikasi belum dibaca' : 'Pembayaran berhasil',
-  created_at: `2025-01-${String((i % 28) + 1).padStart(2, '0')}`,
-}))
+const sentinel = ref<HTMLElement | null>(null)
 
-// State
-const items = ref<any[]>([])
-const page = ref(1)
-const perPage = 20
-const isLoading = ref(false)
-const hasMore = ref(true)
+const monthNames = [
+  '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+]
 
-const loadData = async () => {
-  if (isLoading.value || !hasMore.value) return
-
-  isLoading.value = true
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const start = (page.value - 1) * perPage
-  const end = page.value * perPage
-  const newData = allDummyData.slice(start, end)
-
-  items.value.push(...newData)
-  page.value++
-
-  if (end >= allDummyData.length) {
-    hasMore.value = false
-  }
-
-  isLoading.value = false
+const formatBulan = (bulan: number[]) => {
+  return bulan.map(b => monthNames[b]).join(', ')
 }
 
-const statusChipsColor = {
-  'pending': 'info',
-  'success': 'success',
-  'failed': 'error',
-  'expired': 'secondary',
-  'cancelled': 'secondary',
+const statusConfig: Record<string, { color: string; label: string }> = {
+  paid: { color: 'success', label: 'Berhasil' },
+  manual: { color: 'success', label: 'Berhasil' },
+  pending: { color: 'warning', label: 'Pending' },
+  waiting_payment: { color: 'info', label: 'Menunggu Bayar' },
+  failed: { color: 'error', label: 'Gagal' },
+  expired: { color: 'secondary', label: 'Kedaluwarsa' },
 }
 
-let observer: IntersectionObserver
+const metodeBayarConfig: Record<string, { icon: string; label: string }> = {
+  transfer: { icon: 'ri-bank-line', label: 'Transfer' },
+  tunai: { icon: 'ri-cash-line', label: 'Tunai' },
+  qris: { icon: 'ri-qr-code-line', label: 'QRIS' },
+}
 
 onMounted(() => {
-  const sentinelWarga = document.getElementById('sentinelWarga')
-  observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) {
-      loadData()
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && props.hasMore && !props.loading) {
+      emit('loadMore')
     }
   })
-
-  if (sentinelWarga) observer.observe(sentinelWarga)
-
-  // Initial load
-  loadData()
+  if (sentinel.value) observer.observe(sentinel.value)
 })
 </script>
 
 <template>
   <VRow>
-    <VCol cols="12">
-      <VCard class="pa-0">
+    <!-- Empty state -->
+    <template v-if="items.length === 0 && !loading">
+      <VCol cols="12">
+        <div class="d-flex justify-center mt-4 text-medium-emphasis">
+          Tidak ada riwayat pembayaran.
+        </div>
+      </VCol>
+    </template>
+
+    <!-- List -->
+    <VCol v-for="item in items" :key="item.id" cols="12" sm="6">
+      <VCard rounded="lg" border="sm" variant="elevated" height="100%">
         <VCardItem class="pa-4">
-          <div class="d-flex justify-space-between align-center">
-            <span class="d-flex align-center gap-1" style="font-size: 12px;"> <VIcon>ri-time-line</VIcon> 12 Juni 2024 </span>
-            <VChip color="success" size="small">Berhasil</VChip>
+
+          <!-- Header -->
+          <div class="d-flex justify-space-between align-center mb-3">
+            <VChip :color="item.jenis_iuran === 'kematian' ? 'error' : 'info'" size="x-small" variant="tonal">
+              {{ item.jenis_iuran === 'kematian' ? 'Kematian' : 'Bulanan' }}
+            </VChip>
+
+            <VChip :color="statusConfig[item.status_bayar]?.color ?? 'secondary'" size="x-small" variant="tonal">
+              {{ statusConfig[item.status_bayar]?.label ?? item.status_bayar }}
+            </VChip>
           </div>
-          <div class="mt-3">
-            <VChip color="info" size="small" class="mb-1">Bulanan</VChip>
-            <h4>Pembayaran Iuran Bulan Desember</h4>
-            <p class="text-caption ma-0 mb-2">Periode Tahun 2025</p>
+
+          <!-- Judul -->
+          <h5 class="mb-1 clamp-2" style="text-wrap: wrap; line-height: 1.4;">
+            {{ item.judul_iuran }}
+          </h5>
+
+          <!-- Bulan -->
+          <p v-if="item.jenis_iuran === 'bulanan' && item.bulan?.length"
+            class="text-caption text-medium-emphasis ma-0 mt-1">
+            {{ formatBulan(item.bulan) }}
+          </p>
+
+          <VDivider class="my-3" />
+
+          <!-- Footer: total & metode -->
+          <div class="d-flex justify-space-between align-center">
             <div>
-              <h3 class="ma-0">Rp. 5.000</h3>
-              <div class="ma-0 text-caption text-grey-600 d-flex align-center gap-1">
-                <span>Desember,</span>
-                <div>
-                  <VIcon>ri-cash-line </VIcon>
-                </div>
-                <span>Tunai</span>
+              <p class="text-caption text-medium-emphasis ma-0">Total Bayar</p>
+              <h4 class="ma-0">{{ formatRupiah(item.total_bayar) }}</h4>
+              <p v-if="item.jenis_iuran === 'bulanan' && item.bulan?.length > 1"
+                class="text-caption text-medium-emphasis ma-0">
+                {{ item.bulan.length }} bln × {{ formatRupiah(item.jumlah_iuran_snapshot) }}
+              </p>
+            </div>
+
+            <div class="text-end">
+              <div class="d-flex align-center justify-end gap-1 text-caption text-medium-emphasis">
+                <VIcon size="13">{{ metodeBayarConfig[item.metode_bayar]?.icon ?? 'ri-money-dollar-circle-line' }}
+                </VIcon>
+                <span>{{ metodeBayarConfig[item.metode_bayar]?.label ?? item.metode_bayar }}</span>
               </div>
+              <p class="text-caption text-medium-emphasis ma-0 mt-1">
+                <VIcon size="13" class="me-1">ri-time-line</VIcon>
+                {{ formatDateID(item.created_at) }}
+              </p>
             </div>
           </div>
+
+          <!-- Note -->
+          <template v-if="item.note">
+            <VDivider class="my-3" />
+            <p class="text-caption text-medium-emphasis ma-0">
+              <VIcon size="13" class="me-1">ri-sticky-note-line</VIcon>
+              {{ item.note }}
+            </p>
+          </template>
+
         </VCardItem>
-        <VCardActions class="px-4 pb-4">
-          <div class="d-flex justify-end w-100">
-            <VBtn variant="flat" size="small" color="secondary"  @click="emit('showBuktiBayar')"><VIcon class="me-1">ri-image-line</VIcon> Bukti Pembayaran</VBtn>
-          </div>
-        </VCardActions>
+
+        <!-- Bukti bayar -->
+        <template v-if="['paid', 'manual'].includes(item.status_bayar) && item.bukti_bayar">
+          <VCardActions class="px-4 pb-3 pt-0">
+            <VBtn variant="tonal" size="small" color="secondary" block prepend-icon="ri-image-line"
+              @click="emit('showBuktiBayar', item.bukti_bayar)">
+              Bukti Pembayaran
+            </VBtn>
+          </VCardActions>
+        </template>
       </VCard>
     </VCol>
-    <VCol cols="12">
-      <VCard class="pa-0">
-        <VCardItem class="pa-4">
-          <div class="d-flex justify-space-between align-center">
-            <span class="d-flex align-center gap-1" style="font-size: 12px;"> <VIcon>ri-time-line</VIcon> 12 Juni 2024 </span>
-            <VChip color="success" size="small">Berhasil</VChip>
-          </div>
-          <div class="mt-3">
-            <VChip color="error" size="small" class="mb-1">Kematian</VChip>
-            <h4 class="mb-2">Iuran Kematian untuk Nyoman Gudeg</h4>
-            <div>
-              <h3 class="ma-0">Rp. 40.000</h3>
-              <p class="ma-0 text-caption text-grey-600"> <VIcon>ri-exchange-line </VIcon> Tunai</p>
-            </div>
-          </div>
-        </VCardItem>
-      </VCard>
-    </VCol>
-    <VCol cols="12">
-      <VCard class="pa-0">
-        <VCardItem class="pa-4">
-          <div class="d-flex justify-space-between align-center">
-            <span class="d-flex align-center gap-1" style="font-size: 12px;"> <VIcon>ri-time-line</VIcon> 12 Juni 2024 </span>
-            <VChip color="success" size="small">Berhasil</VChip>
-          </div>
-          <div class="mt-3">
-            <VChip color="error" size="small" class="mb-1">Kematian</VChip>
-            <h4 class="mb-2">Iuran Kematian untuk Putu Dueg</h4>
-            <div>
-              <h3 class="ma-0">Rp. 40.000</h3>
-              <div class="ma-0 text-caption text-grey-600 d-flex align-center gap-1"> 
-                <div>
-                  <VImg :src="qris" width="24px" alt="qris logo" />
-                </div>
-                <span>QRIS</span>
-              </div>
-            </div>
-          </div>
-        </VCardItem>
-      </VCard>
-    </VCol>
-    <VCol cols="12">
-      <VCard class="pa-0">
-        <VCardItem class="pa-4">
-          <div class="d-flex justify-space-between align-center">
-            <span class="d-flex align-center gap-1" style="font-size: 12px;"> <VIcon>ri-time-line</VIcon> 12 Juni 2024 </span>
-            <VChip color="success" size="small">Berhasil</VChip>
-          </div>
-          <div class="mt-3">
-            <VChip color="info" size="small" class="mb-1">Bulanan</VChip>
-            <h4>Pembayaran Iuran Bulan Desember</h4>
-            <p class="text-caption ma-0 mb-2">Periode Tahun 2025</p>
-            <div>
-              <h3 class="ma-0">Rp. 60.000</h3>
-              <div class="ma-0 text-caption text-grey-600 d-flex align-center gap-1">
-                <span>Januari - Desember,</span>
-                <div>
-                  <VIcon>ri-cash-line </VIcon>
-                </div>
-                <span>Tunai</span>
-              </div>
-            </div>
-          </div>
-        </VCardItem>
-        <VCardActions class="px-4 pb-4">
-          <div class="d-flex justify-end w-100">
-            <VBtn variant="flat" size="small" color="secondary" @click="emit('showBuktiBayar')"><VIcon class="me-1" >ri-image-line</VIcon> Bukti Pembayaran</VBtn>
-          </div>
-        </VCardActions>
-      </VCard>
+
+    <!-- Sentinel -->
+    <div ref="sentinel" style="height: 1px;" />
+
+    <!-- Loading -->
+    <VCol v-if="loading" cols="12">
+      <div class="d-flex justify-center py-4">
+        <VProgressCircular indeterminate size="26" />
+      </div>
     </VCol>
   </VRow>
 </template>
-
-<style scoped>
-.table-scroll-wrapper {
-  max-height: 400px;   /* tinggi container */
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100%;
-}
-</style>

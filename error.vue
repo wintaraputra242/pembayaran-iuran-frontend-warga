@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { NuxtError } from 'nuxt/app'
-import { useTheme } from 'vuetify'
 import misc404 from '@images/pages/404.png'
 import miscMaskDark from '@images/pages/misc-mask-dark.png'
 import miscMaskLight from '@images/pages/misc-mask-light.png'
 import tree from '@images/pages/tree.png'
+import type { NuxtError } from 'nuxt/app'
+import { useTheme } from 'vuetify'
 
 defineOptions({
   inheritAttrs: false,

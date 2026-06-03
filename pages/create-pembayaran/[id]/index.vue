@@ -1,48 +1,69 @@
 <script setup lang="ts">
-import DialogTakeFotoBuktiPembayaran from '@/views/create-pembayaran/DialogTakeFotoBuktiPembayaran.vue';
 import FormCreatePembayaran from '@/views/create-pembayaran/FormCreatePembayaran.vue';
 
-const tab = ref('kematian')
+const route = useRoute()
+const router = useRouter()
+const iuranStore = useInformasiIuranStore()
+const pembayaranStore = usePembayaranStore()
 
-const filters = reactive({
-  kematian: '',
-  bulanan: '',
+const item = ref<import('@/types/api/informasi-iuran').InformasiIuran | null>(null)
+
+onMounted(async () => {
+  const id = (route.params as any)?.id
+
+  const fromList = iuranStore.iuranList?.find((i: any) => i.id == id)
+
+  if (fromList) {
+    item.value = fromList
+  } else {
+    await iuranStore.fetchDetail(id)
+    item.value = iuranStore.iuranItem
+  }
+
+  // await pembayaranStore.fetchPaidMonths()
 })
+
+watch(() => item.value, async (val) => {
+  if (val && val?.jenis_iuran === 'bulanan') {
+    await pembayaranStore.fetchPaidMonths()
+  }
+}, { immediate: true })
 
 const showTakeFoto = ref(false)
 const showSuccessConfirm = ref(false)
-
-const handleSubmit = () => {
-  showSuccessConfirm.value = true
-}
-
 const showConfirmation = ref(false)
 const isLoadingConfirm = ref(false)
 
-const handleCloseSuccessDialog = () => {
-  showSuccessConfirm.value = false
-
-  confirmOptions.title = 'Ingin Menambah Pembayaran?'
-  confirmOptions.message = 'Apakah Anda ingin menambahkan pembayaran baru lagi di Iuran A ini?'
-  confirmOptions.confirmText = 'Ya'
-  confirmOptions.cancelText = 'Tidak'
-  confirmOptions.confirmColor = 'primary'
-  confirmOptions.confirmIcon = 'ri-check-line'
-
-  showConfirmation.value = true 
-}
-
-const confirmOptions = {
+const confirmOptions = reactive({
   title: '',
   message: '',
   confirmText: '',
   cancelText: '',
   confirmColor: '',
   confirmIcon: '',
+})
+
+const handleSuccess = () => {
+  showSuccessConfirm.value = true
 }
 
-const deleteItem = () => {
-  showConfirmation.value = false 
+const handleCloseSuccessDialog = () => {
+  showSuccessConfirm.value = false
+
+  router.push('/create-pembayaran')
+
+  // confirmOptions.title = 'Ingin Menambah Pembayaran?'
+  // confirmOptions.message = 'Apakah Anda ingin menambahkan pembayaran baru lagi di iuran ini?'
+  // confirmOptions.confirmText = 'Ya'
+  // confirmOptions.cancelText = 'Tidak'
+  // confirmOptions.confirmColor = 'primary'
+  // confirmOptions.confirmIcon = 'ri-check-line'
+
+  // showConfirmation.value = true
+}
+
+const handleConfirm = () => {
+  showConfirmation.value = false
 }
 </script>
 
@@ -55,29 +76,31 @@ const deleteItem = () => {
           Keluar
         </VBtn>
       </div>
-      <VChip size="small" :color="'info'" class="mb-1">
-        {{ 'Bulanan' }}
-      </VChip>
-      <h2 class="mb-1">Iuran tahun 2025</h2>
-      <p>Isi form berikut untuk membuat pembayaran baru.</p>
+
+      <template v-if="item">
+        <VChip size="small" color="info" class="mb-1">
+          {{ item.jenis_iuran === 'bulanan' ? 'Bulanan' : 'Kematian' }}
+        </VChip>
+        <h2 class="mb-1">{{ item.judul_iuran }}</h2>
+        <p>Isi form berikut untuk membuat pembayaran baru.</p>
+      </template>
+
+      <template v-else>
+        <VSkeleton type="chip" class="mb-1" />
+        <VSkeleton type="heading" class="mb-1" />
+        <VSkeleton type="text" />
+      </template>
     </div>
-    
-    <FormCreatePembayaran @submit="showTakeFoto = true" />
 
-    <DialogTakeFotoBuktiPembayaran :is-show="showTakeFoto" @close="showTakeFoto = false" @submit="handleSubmit" />
+    <FormCreatePembayaran v-if="item" :item="item" @success="handleSuccess"
+      @close="router.push('/create-pembayaran')" />
 
-    <SuccessDialog v-model="showSuccessConfirm" title="Pembayaran Berhasil" message="Pembayaran Iuran A dengan warga atas nama A, berhasil dilakukan" @close="handleCloseSuccessDialog" />
+    <SuccessDialog v-model="showSuccessConfirm" title="Pembayaran Berhasil"
+      :message="`Pembayaran ${item?.judul_iuran} berhasil dilakukan`" @close="handleCloseSuccessDialog" />
 
-    <ConfirmDialog
-      v-model="showConfirmation"
-      :title="confirmOptions.title"
-      :message="confirmOptions.message"
-      :confirm-text="confirmOptions.confirmText"
-      :cancel-text="confirmOptions.cancelText"
-      :confirm-color="confirmOptions.confirmColor"
-      :confirm-icon="confirmOptions.confirmIcon"
-      :loading="isLoadingConfirm"
-      @confirm="deleteItem"
-    />
+    <ConfirmDialog v-model="showConfirmation" :title="confirmOptions.title" :message="confirmOptions.message"
+      :confirm-text="confirmOptions.confirmText" :cancel-text="confirmOptions.cancelText"
+      :confirm-color="confirmOptions.confirmColor" :confirm-icon="confirmOptions.confirmIcon"
+      :loading="isLoadingConfirm" @confirm="handleConfirm" />
   </div>
 </template>
