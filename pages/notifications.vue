@@ -6,6 +6,7 @@ const router = useRouter()
 
 const page = ref(1)
 const sentinel = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 const loadNotifications = async (reset = false) => {
   if (reset) {
@@ -25,36 +26,115 @@ const loadMore = async () => {
   await loadNotifications()
 }
 
-const goToPayment = () => {
-  router.push('/create-pembayaran')
+// Fix bug sentinel — setup observer setelah data ada
+const setupObserver = () => {
+  if (!sentinel.value) return
+
+  observer?.disconnect()
+
+  observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !notificationStore.loading) loadMore()
+  }, { rootMargin: '100px' })
+
+  observer.observe(sentinel.value)
 }
 
+watch(sentinel, (el) => {
+  if (el) setupObserver()
+})
+
+watch(() => notificationStore.hasMore, () => {
+  setupObserver()
+})
+
 onMounted(async () => {
-  notificationStore.resetState() // ← reset bersih sebelum fetch
+  notificationStore.resetState()
   page.value = 1
 
   await loadNotifications(true)
   await notificationStore.markAllAsRead()
-
-  const observer = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) loadMore()
-  }, { rootMargin: '100px' })
-
-  if (sentinel.value) observer.observe(sentinel.value)
 })
 
-// Config tampilan berdasarkan type notifikasi
-const notifTypeConfig: Record<string, { color: string; icon: string; label: string }> = {
-  reminder: { color: 'warning', icon: 'ri-alarm-line', label: 'Pengingat' },
-  pengingat: { color: 'warning', icon: 'ri-alarm-line', label: 'Pengingat' },
-  manual: { color: 'info', icon: 'ri-notification-line', label: 'Informasi' },
-  payment: { color: 'success', icon: 'ri-cash-line', label: 'Pembayaran' },
-  kematian: { color: 'error', icon: 'ri-heart-2-line', label: 'Kematian' },
-  bulanan: { color: 'info', icon: 'ri-calendar-line', label: 'Bulanan' },
+onUnmounted(() => {
+  observer?.disconnect()
+})
+
+// Config notifikasi — disesuaikan untuk 2 jenis utama
+const notifTypeConfig: Record<string, {
+  color: string
+  icon: string
+  label: string
+  action?: { label: string; icon: string; route?: string }
+}> = {
+  // Iuran baru
+  iuran_baru: {
+    color: 'info',
+    icon: 'ri-file-add-line',
+    label: 'Iuran Baru',
+    action: { label: 'Lihat Iuran', icon: 'ri-eye-line', route: '/iuran' },
+  },
+  // Iuran terlambat / pengingat
+  pengingat_iuran: {
+    color: 'warning',
+    icon: 'ri-alarm-line',
+    label: 'Pengingat Iuran',
+    action: { label: 'Bayar Sekarang', icon: 'ri-cash-line', route: '/create-pembayaran' },
+  },
+  // Fallback untuk type lama
+  pengingat: {
+    color: 'warning',
+    icon: 'ri-alarm-line',
+    label: 'Pengingat',
+    action: { label: 'Bayar Sekarang', icon: 'ri-cash-line', route: '/create-pembayaran' },
+  },
+  reminder: {
+    color: 'warning',
+    icon: 'ri-alarm-line',
+    label: 'Pengingat',
+    action: { label: 'Bayar Sekarang', icon: 'ri-cash-line', route: '/create-pembayaran' },
+  },
+  approved: {
+    color: 'success',
+    icon: 'ri-checkbox-circle-line',
+    label: 'Diterima',
+  },
+  rejected: {
+    color: 'error',
+    icon: 'ri-close-circle-line',
+    label: 'Ditolak',
+  },
+  payment: {
+    color: 'success',
+    icon: 'ri-cash-line',
+    label: 'Pembayaran',
+  },
 }
 
 const getNotifConfig = (type: string) =>
   notifTypeConfig[type] ?? { color: 'secondary', icon: 'ri-notification-line', label: type }
+
+const formatMessage = (message: string) => {
+  if (!message) return ''
+
+  return message
+    // Bold: *teks* → <strong>teks</strong>
+    .replace(/\*(.+?)\*/g, '<strong>$1</strong>')
+    // Italic: _teks_ → <em>teks</em>
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    // Newline
+    .replace(/\r\n/g, '<br>')
+    .replace(/\n/g, '<br>')
+}
+
+const handleAction = (notif: any) => {
+  if (notif.data?.id_informasi_iuran) {
+    // Langsung ke halaman create pembayaran dengan id iuran
+    router.push(`/create-pembayaran/${notif.data.id_informasi_iuran}`)
+    return
+  }
+  const config = getNotifConfig(notif.type)
+  if (config.action?.route) router.push(config.action.route)
+}
 </script>
 
 <template>
@@ -63,7 +143,7 @@ const getNotifConfig = (type: string) =>
     <div class="mb-4">
       <h2>Notifikasi</h2>
       <span class="text-body-2 text-medium-emphasis">
-        Berisi informasi dan pemberitahuan penting yang diterima oleh pengguna.
+        Informasi dan pemberitahuan penting terkait iuran banjar.
       </span>
     </div>
 
@@ -81,23 +161,22 @@ const getNotifConfig = (type: string) =>
     <!-- List -->
     <VRow v-if="notificationStore.hasData">
       <VCol v-for="notif in notificationStore.notifications" :key="notif.id" cols="12" sm="6">
-        <VCard rounded="lg" border="sm" height="100%" :color="!notif.is_read ? 'blue-lighten-5' : undefined"
-          class="position-relative pb-10">
+        <VCard rounded="lg" border="sm" height="100%"
+          :style="!notif.is_read ? 'border-left: 3px solid rgb(var(--v-theme-primary)) !important;' : ''"
+          class="position-relative">
           <VCardItem class="pa-4">
             <div class="d-flex align-start gap-3">
-
               <!-- Icon -->
-              <VAvatar :color="getNotifConfig(notif.type).color" variant="tonal" size="40">
+              <VAvatar :color="getNotifConfig(notif.type).color" variant="tonal" size="40" class="flex-shrink-0">
                 <VIcon size="20">{{ getNotifConfig(notif.type).icon }}</VIcon>
               </VAvatar>
 
               <div class="flex-grow-1 min-width-0">
                 <!-- Type chip & badge baru -->
-                <div class="d-flex align-center justify-space-between mb-1">
+                <div class="d-flex align-center justify-space-between mb-1 flex-wrap gap-1">
                   <VChip :color="getNotifConfig(notif.type).color" size="x-small" variant="tonal">
                     {{ getNotifConfig(notif.type).label }}
                   </VChip>
-
                   <VChip v-if="!notif.is_read" color="primary" size="x-small" variant="flat">
                     Baru
                   </VChip>
@@ -109,9 +188,8 @@ const getNotifConfig = (type: string) =>
                 </p>
 
                 <!-- Message -->
-                <p class="text-caption text-medium-emphasis ma-0">
-                  {{ notif.message }}
-                </p>
+                <p class="text-caption text-medium-emphasis ma-0" style="line-height: 1.6;"
+                  v-html="formatMessage(notif.message)" />
 
                 <!-- Tanggal -->
                 <p class="text-caption text-medium-emphasis ma-0 mt-2">
@@ -122,19 +200,14 @@ const getNotifConfig = (type: string) =>
             </div>
           </VCardItem>
 
-          <!-- Action -->
-          <VCardActions>
-            <div class="position-absolute" style="right: 10px; bottom: 10px;">
-              <VBtn v-if="notif.type === 'pengingat' || notif.type === 'reminder' || notif.type === 'payment'"
-                color="primary" variant="flat" size="small" block prepend-icon="ri-cash-line" @click="goToPayment()">
-                Bayar Sekarang
-              </VBtn>
-
-              <VBtn v-else color="secondary" variant="flat" size="small" block prepend-icon="ri-eye-line"
-                @click="notificationStore.markAsRead(notif.id)">
-                Tandai Dibaca
-              </VBtn>
-            </div>
+          <!-- Action button -->
+          <VCardActions v-if="getNotifConfig(notif.type).action || notif.data?.id_informasi_iuran"
+            class="px-4 pb-3 pt-0">
+            <VBtn :color="getNotifConfig(notif.type).color" variant="tonal" size="small" block
+              :prepend-icon="notif.data?.id_informasi_iuran ? 'ri-cash-line' : getNotifConfig(notif.type).action?.icon"
+              @click="handleAction(notif)">
+              {{ notif.data?.id_informasi_iuran ? 'Bayar Sekarang' : getNotifConfig(notif.type).action?.label }}
+            </VBtn>
           </VCardActions>
         </VCard>
       </VCol>

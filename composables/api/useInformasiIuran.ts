@@ -9,7 +9,7 @@ export const useInformasiIuran = () => {
     per_page?: number
     jenis_iuran?: string
     keyword?: string
-    status_bayar?: 'sudah_bayar' | 'belum_bayar'
+    status_bayar?: 'sudah_bayar' | 'sebagian_bayar' | 'belum_bayar' // ← tambah sebagian_bayar
   }): Promise<GetInformasiIuranResponse> => {
     return await api('/informasi-iuran', {
       method: 'GET',

@@ -40,6 +40,18 @@ export interface GetRiwayatPembayaranResponse {
   data: PaginatedResponse<RiwayatPembayaran>
 }
 
+export interface GetQrisResponse {
+  code: number
+  success: boolean
+  message: string
+  data: {
+    image: string,
+    nama_rekening: string,
+    nomor_rekening: string,
+    keterangan: string,
+  }
+}
+
 export interface GetPaidMonthsResponse {
   code: number
   success: boolean

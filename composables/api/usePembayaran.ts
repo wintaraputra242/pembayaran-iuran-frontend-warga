@@ -1,14 +1,10 @@
-import type { GetPaidMonthsResponse, GetRiwayatPembayaranResponse, PaymentResponse } from '@/types/api/pembayaran'
+import type { GetPaidMonthsResponse, GetQrisResponse, GetRiwayatPembayaranResponse, PaymentResponse } from '@/types/api/pembayaran'
 import { useApi } from './useApi'
 
 export const usePembayaran = () => {
   const { api } = useApi()
 
-  const payment = async (body: {
-    id_informasi_iuran: number
-    bulan?: number[]
-    note?: string
-  }): Promise<PaymentResponse> => {
+  const payment = async (body: FormData): Promise<PaymentResponse> => {
     return await api<PaymentResponse>('/pembayaran', {
       method: 'POST',
       body,
@@ -30,6 +26,12 @@ export const usePembayaran = () => {
     })
   }
 
+  const getQris = async (): Promise<GetQrisResponse> => {
+    return await api('/qris', {
+      method: 'GET',
+    })
+  }
+
   const getPaidMonths = async (): Promise<GetPaidMonthsResponse> => {
     return await api('/pembayaran/paid-months', {
       method: 'GET',
@@ -38,6 +40,7 @@ export const usePembayaran = () => {
 
   return {
     payment,
+    getQris,
     getRiwayat,
     getPaidMonths
   }

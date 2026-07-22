@@ -20,14 +20,17 @@ onMounted(async () => {
     item.value = iuranStore.iuranItem
   }
 
-  // await pembayaranStore.fetchPaidMonths()
-})
-
-watch(() => item.value, async (val) => {
-  if (val && val?.jenis_iuran === 'bulanan') {
+  // Fetch paidMonths setelah item sudah pasti terisi
+  if (item.value?.jenis_iuran === 'bulanan') {
     await pembayaranStore.fetchPaidMonths()
   }
-}, { immediate: true })
+})
+
+// watch(() => item.value, async (val) => {
+//   if (val && val?.jenis_iuran === 'bulanan') {
+//     await pembayaranStore.fetchPaidMonths()
+//   }
+// }, { immediate: true })
 
 const showTakeFoto = ref(false)
 const showSuccessConfirm = ref(false)
@@ -68,7 +71,7 @@ const handleConfirm = () => {
 </script>
 
 <template>
-  <div class="mt-n5">
+  <div class="mt-n1">
     <div class="mb-4">
       <div class="mb-3">
         <VBtn class="px-0 py-1" variant="text" size="large" to="/create-pembayaran">
@@ -82,7 +85,7 @@ const handleConfirm = () => {
           {{ item.jenis_iuran === 'bulanan' ? 'Bulanan' : 'Kematian' }}
         </VChip>
         <h2 class="mb-1">{{ item.judul_iuran }}</h2>
-        <p>Isi form berikut untuk membuat pembayaran baru.</p>
+        <p>Isi form berikut dan upload bukti pembayaran.</p>
       </template>
 
       <template v-else>
@@ -95,8 +98,9 @@ const handleConfirm = () => {
     <FormCreatePembayaran v-if="item" :item="item" @success="handleSuccess"
       @close="router.push('/create-pembayaran')" />
 
-    <SuccessDialog v-model="showSuccessConfirm" title="Pembayaran Berhasil"
-      :message="`Pembayaran ${item?.judul_iuran} berhasil dilakukan`" @close="handleCloseSuccessDialog" />
+    <SuccessDialog v-model="showSuccessConfirm" title="Bukti Pembayaran Terkirim"
+      :message="`Bukti pembayaran ${item?.judul_iuran} berhasil dikirim. Menunggu validasi pengurus.`"
+      @close="handleCloseSuccessDialog" />
 
     <ConfirmDialog v-model="showConfirmation" :title="confirmOptions.title" :message="confirmOptions.message"
       :confirm-text="confirmOptions.confirmText" :cancel-text="confirmOptions.cancelText"

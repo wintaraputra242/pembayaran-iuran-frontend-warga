@@ -18,7 +18,6 @@ const bulananItems = computed(() =>
 const loadData = async (type: 'kematian' | 'bulanan') => {
   iuranStore.reload = true
   iuranStore.setFilter('jenis_iuran', type)
-
   page.value = 1
 
   await iuranStore.fetchIuranWithStatus({
@@ -28,29 +27,24 @@ const loadData = async (type: 'kematian' | 'bulanan') => {
   })
 }
 
-watch(tab, (val) => {
-  loadData(val)
-})
+watch(tab, (val) => loadData(val), { immediate: true })
 
+// Debounce keyword search
 let debounceTimer: any
-
 watch(() => iuranStore.filters.keyword, () => {
   if (debounceTimer) clearTimeout(debounceTimer)
-
-  debounceTimer = setTimeout(() => {
-    loadData(tab.value)
-  }, 500)
+  debounceTimer = setTimeout(() => loadData(tab.value), 500)
 })
 
+// Filter status_bayar
+watch(() => iuranStore.filters.status_bayar, () => loadData(tab.value))
+
 watch(() => route.query.jenis_iuran, (newVal) => {
-  if (newVal) {
-    tab.value = newVal as 'kematian' | 'bulanan'
-  }
+  tab.value = (newVal as 'kematian' | 'bulanan') ?? 'kematian'
 }, { immediate: true })
 
 const handleLoadMore = async () => {
   page.value += 1
-
   await iuranStore.fetchIuranWithStatus({
     page: page.value,
     per_page: 10,
@@ -58,9 +52,7 @@ const handleLoadMore = async () => {
   })
 }
 
-onMounted(() => {
-  loadData('kematian')
-})
+// onMounted(() => loadData('kematian'))
 </script>
 
 <template>
@@ -83,24 +75,47 @@ onMounted(() => {
 
       <!-- KEMATIAN -->
       <VTabsWindowItem class="py-5" value="kematian">
-        <div class="mb-3">
-          <VTextField :model-value="iuranStore.filters.keyword" placeholder="Cari informasi iuran kematian"
-            prepend-inner-icon="ri-search-2-line" @update:model-value="iuranStore.setFilter('keyword', $event)" />
-        </div>
+        <VRow class="mb-3">
+          <VCol cols="12" sm="8">
+            <VTextField :model-value="iuranStore.filters.keyword"
+              placeholder="Cari judul, nama almarhum, atau penanggung jawab" prepend-inner-icon="ri-search-2-line"
+              hide-details @update:model-value="iuranStore.setFilter('keyword', $event)" />
+          </VCol>
+          <VCol cols="12" sm="4">
+            <VSelect :model-value="iuranStore.filters.status_bayar" placeholder="Semua Status" clearable hide-details
+              :items="[
+                { title: 'Sudah Bayar', value: 'sudah_bayar' },
+                { title: 'Belum Bayar', value: 'belum_bayar' },
+              ]" item-title="title" item-value="value"
+              @update:model-value="iuranStore.setFilter('status_bayar', $event ?? null)" />
+          </VCol>
+        </VRow>
 
         <ListInformasiIuranCreatePembayaran :items="kematianItems" :loading="iuranStore.loading"
-          :has-more="iuranStore.hasMore" @load-more="handleLoadMore" />
+          :has-more="iuranStore.hasMore" :keyword="iuranStore.filters.keyword" @load-more="handleLoadMore" />
       </VTabsWindowItem>
 
       <!-- BULANAN -->
       <VTabsWindowItem class="py-5" value="bulanan">
-        <div class="mb-3">
-          <VTextField :model-value="iuranStore.filters.keyword" placeholder="Cari informasi iuran bulanan"
-            prepend-inner-icon="ri-search-2-line" @update:model-value="iuranStore.setFilter('keyword', $event)" />
-        </div>
+        <VRow class="mb-3">
+          <VCol cols="12" sm="8">
+            <VTextField :model-value="iuranStore.filters.keyword" placeholder="Cari judul atau periode iuran"
+              prepend-inner-icon="ri-search-2-line" hide-details
+              @update:model-value="iuranStore.setFilter('keyword', $event)" />
+          </VCol>
+          <VCol cols="12" sm="4">
+            <VSelect :model-value="iuranStore.filters.status_bayar" placeholder="Semua Status" clearable hide-details
+              :items="[
+                { title: 'Sudah Bayar', value: 'sudah_bayar' },
+                { title: 'Sebagian Bayar', value: 'sebagian_bayar' },
+                { title: 'Belum Bayar', value: 'belum_bayar' },
+              ]" item-title="title" item-value="value"
+              @update:model-value="iuranStore.setFilter('status_bayar', $event ?? null)" />
+          </VCol>
+        </VRow>
 
         <ListInformasiIuranCreatePembayaran :items="bulananItems" :loading="iuranStore.loading"
-          :has-more="iuranStore.hasMore" @load-more="handleLoadMore" />
+          :has-more="iuranStore.hasMore" :keyword="iuranStore.filters.keyword" @load-more="handleLoadMore" />
       </VTabsWindowItem>
 
     </VTabsWindow>

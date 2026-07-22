@@ -45,7 +45,15 @@ const isCurrentUser = (item: any) => item.nik === (authStore.user as any)?.warga
               <VAvatar color="grey-300" icon="ri-user-line" />
               <div>
                 <h4>{{ item.nama_warga }}</h4>
-                <p class="ma-0 text-caption">{{ item.no_hp }}</p>
+                <a v-if="item?.no_hp" :href="`https://wa.me/${item.no_hp.replace(/\D/g, '').replace(/^0/, '62')}`"
+                  target="_blank" rel="noopener noreferrer"
+                  class="text-decoration-none d-inline-flex align-center gap-1 px-2 py-1 rounded-lg"
+                  style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.3);">
+                  <VIcon icon="ri-whatsapp-line" size="13" color="success" />
+                  <p class="ma-0 text-caption font-weight-medium" style="color: #25d366;">{{ item.no_hp }}</p>
+                  <VIcon icon="ri-external-link-line" size="11" style="color: #25d366; opacity: 0.7;" />
+                </a>
+                <p v-else class="ma-0 text-caption text-medium-emphasis">-</p>
               </div>
             </div>
           </VCardItem>

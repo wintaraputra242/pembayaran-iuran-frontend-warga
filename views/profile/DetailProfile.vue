@@ -5,16 +5,28 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const uiStore = useUiStore() // ← tambah untuk notifikasi
 
-const defaultParams = {
-  nik: (authStore.user as any)?.warga?.nik,
-  nama_warga: (authStore.user as any)?.warga?.nama_warga,
-  alamat: (authStore.user as any)?.warga?.alamat,
-  no_hp: (authStore.user as any)?.warga?.no_hp,
+// Computed dari store — selalu reactive
+const wargaData = computed(() => (authStore.user as any)?.warga)
+
+const params = reactive({
+  nik: wargaData.value?.nik ?? '',
+  nama_warga: wargaData.value?.nama_warga ?? '',
+  alamat: wargaData.value?.alamat ?? '',
+  no_hp: wargaData.value?.no_hp ?? '',
   password: '',
   password_confirmation: '',
-}
-const params = reactive({ ...defaultParams })
+})
+
+// Sync params saat authStore.user berubah (setelah update berhasil)
+watch(wargaData, (newVal) => {
+  if (!newVal) return
+  params.nik = newVal.nik ?? ''
+  params.nama_warga = newVal.nama_warga ?? ''
+  params.alamat = newVal.alamat ?? ''
+  params.no_hp = newVal.no_hp ?? ''
+}, { deep: true })
 
 const rules = {
   required: (v: any) => !!v || 'Field wajib diisi',
@@ -56,6 +68,8 @@ const rules = {
 }
 
 const isEditProfile = ref(false)
+const showPasswordForm = ref(false)
+const showConfirmPassword = ref(false)
 const form = ref()
 
 const handleSubmit = async () => {
@@ -73,16 +87,56 @@ const handleSubmit = async () => {
     body.password_confirmation = params.password_confirmation
   }
 
+  // Di handleSubmit, ganti uiStore.showSuccess dengan:
   const res = await authStore.updateProfile(body)
-  if (res) isEditProfile.value = false
+  if (res) {
+    isEditProfile.value = false
+    showPasswordForm.value = false
+    params.password = ''
+    params.password_confirmation = ''
+    triggerSuccessAlert() // ← ganti ini
+  }
 }
-
 
 const handleCancel = () => {
-  Object.assign(params, defaultParams)
+  // Reset params ke data terbaru dari store
+  params.nik = wargaData.value?.nik ?? ''
+  params.nama_warga = wargaData.value?.nama_warga ?? ''
+  params.alamat = wargaData.value?.alamat ?? ''
+  params.no_hp = wargaData.value?.no_hp ?? ''
+  params.password = ''
+  params.password_confirmation = ''
+
   form.value?.resetValidation()
   isEditProfile.value = false
+  showPasswordForm.value = false
+  showConfirmPassword.value = false
 }
+
+const statusKeaktifan = computed(() => wargaData.value?.status_keaktifan ?? 'aktif')
+const isAktif = computed(() => statusKeaktifan.value === 'aktif')
+const namaRegu = computed(() => wargaData.value?.regu?.nama_regu ?? '-')
+
+const handlePhoneInput = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  input.value = input.value.replace(/\D/g, '')
+  params.no_hp = input.value
+}
+
+const showSuccessAlert = ref(false)
+let alertTimer: ReturnType<typeof setTimeout> | null = null
+
+const triggerSuccessAlert = () => {
+  showSuccessAlert.value = true
+  if (alertTimer) clearTimeout(alertTimer)
+  alertTimer = setTimeout(() => {
+    showSuccessAlert.value = false
+  }, 4000) // hilang setelah 4 detik
+}
+
+onUnmounted(() => {
+  if (alertTimer) clearTimeout(alertTimer)
+})
 </script>
 
 <template>
@@ -96,13 +150,14 @@ const handleCancel = () => {
               <VIcon size="32" color="white">ri-user-line</VIcon>
             </VAvatar>
             <div class="flex-grow-1">
-              <h3 class="mb-1">{{ params.nama_warga }}</h3>
-              <p class="ma-0 text-caption text-medium-emphasis">{{ params.nik }}</p>
+              <h3 class="mb-1 text-h6 font-weight-bold">{{ params.nama_warga }}</h3>
+              <p class="ma-0 text-caption text-medium-emphasis mb-1">{{ params.nik }}</p>
               <p class="ma-0 text-caption text-medium-emphasis">{{ params.no_hp }}</p>
             </div>
-            <VChip color="success" size="small" variant="tonal" prepend-icon="ri-checkbox-circle-line">
-              Aktif
-            </VChip>
+            <!-- <VChip class="position-absolute" style="top: -10px; right: 0px;" :color="isAktif ? 'success' : 'error'"
+              size="small" variant="flat" :prepend-icon="isAktif ? 'ri-checkbox-circle-line' : 'ri-close-circle-line'">
+              {{ isAktif ? 'Aktif' : 'Tidak Aktif' }}
+            </VChip> -->
           </div>
         </VCardItem>
       </VCard>
@@ -117,7 +172,7 @@ const handleCancel = () => {
               <VIcon size="28" color="primary">ri-team-line</VIcon>
             </div>
             <p class="text-caption text-medium-emphasis ma-0 mb-1">Regu</p>
-            <h4 class="ma-0">Regu A</h4>
+            <h4 class="ma-0">{{ namaRegu }}</h4>
           </div>
         </VCardItem>
       </VCard>
@@ -131,7 +186,9 @@ const handleCancel = () => {
               <VIcon size="28" color="success">ri-user-follow-line</VIcon>
             </div>
             <p class="text-caption text-medium-emphasis ma-0 mb-1">Status</p>
-            <h4 class="ma-0 text-success">Aktif</h4>
+            <h4 class="ma-0" :class="isAktif ? 'text-success' : 'text-error'">
+              {{ isAktif ? 'Aktif' : 'Tidak Aktif' }}
+            </h4>
           </div>
         </VCardItem>
       </VCard>
@@ -154,25 +211,55 @@ const handleCancel = () => {
           <VDivider class="mt-3" />
         </VCardItem>
 
+        <!-- Alert sukses -->
+        <Transition name="alert-slide">
+          <div v-if="showSuccessAlert" style="
+            margin: 0 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(var(--v-theme-success), 0.1);
+            border: 1px solid rgba(var(--v-theme-success), 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          ">
+            <VIcon icon="ri-checkbox-circle-line" color="success" size="20" />
+            <div class="flex-grow-1">
+              <p class="ma-0 font-weight-bold text-success" style="font-size: 13px;">
+                Profil berhasil diperbarui!
+              </p>
+              <p class="ma-0 text-medium-emphasis" style="font-size: 11px;">
+                Data Anda telah tersimpan.
+              </p>
+            </div>
+            <VIcon icon="ri-close-line" size="16" color="success" class="cursor-pointer" style="opacity: 0.6;"
+              @click="showSuccessAlert = false" />
+          </div>
+        </Transition>
+
         <VCardItem class="pa-4">
           <VForm ref="form" @submit.prevent="handleSubmit">
             <VRow>
-              <VCol cols="12">
+              <VCol cols="12" class="pt-5">
                 <!-- NIK tidak bisa diubah -->
                 <VTextField v-model="params.nik" label="NIK" prepend-inner-icon="ri-id-card-line" variant="outlined"
-                  density="comfortable" readonly disabled hint="NIK tidak dapat diubah" persistent-hint />
+                  density="comfortable" readonly disabled :hint="isEditProfile ? 'NIK tidak dapat diubah' : ''"
+                  persistent-hint />
               </VCol>
 
               <VCol cols="12">
                 <VTextField v-model="params.nama_warga" label="Nama Lengkap" placeholder="Masukkan nama warga"
                   :rules="[rules.nama]" :readonly="!isEditProfile" prepend-inner-icon="ri-user-line" variant="outlined"
-                  density="comfortable" />
+                  density="comfortable"
+                  @input="params.nama_warga = ($event.target as HTMLInputElement).value.toUpperCase()" />
               </VCol>
 
               <VCol cols="12">
                 <VTextField v-model="params.no_hp" label="No. Handphone" placeholder="Masukkan no. handphone"
                   :rules="[rules.phone]" :readonly="!isEditProfile" prepend-inner-icon="ri-phone-line"
-                  variant="outlined" density="comfortable" />
+                  variant="outlined" density="comfortable" inputmode="numeric"
+                  :hint="isEditProfile ? 'Pastikan no. handphone belum terdaftar di sistem. No. handphone digunakan untuk login.' : ''"
+                  :persistent-hint="isEditProfile" @input="handlePhoneInput" />
               </VCol>
 
               <VCol cols="12">
@@ -185,23 +272,38 @@ const handleCancel = () => {
               <template v-if="isEditProfile">
                 <VCol cols="12">
                   <VDivider class="mb-1" />
-                  <p class="text-caption text-medium-emphasis mb-3">
-                    <VIcon size="13" class="me-1">ri-lock-line</VIcon>
-                    Kosongkan jika tidak ingin mengubah password
-                  </p>
                 </VCol>
 
-                <VCol cols="12">
-                  <VTextField v-model="params.password" label="Password Baru" placeholder="Masukkan password baru"
-                    type="password" prepend-inner-icon="ri-lock-line" variant="outlined" density="comfortable"
-                    :rules="params.password ? [rules.password] : []" />
+                <!-- Tombol ubah password — muncul kalau belum klik -->
+                <VCol v-if="!showPasswordForm" cols="12">
+                  <VBtn color="warning" block prepend-icon="ri-lock-line" size="small"
+                    @click="showConfirmPassword = true">
+                    Ubah Password
+                  </VBtn>
                 </VCol>
 
-                <VCol cols="12">
-                  <VTextField v-model="params.password_confirmation" label="Konfirmasi Password"
-                    placeholder="Ulangi password baru" type="password" prepend-inner-icon="ri-lock-2-line"
-                    variant="outlined" density="comfortable" :rules="params.password ? [rules.passwordConfirm] : []" />
-                </VCol>
+                <!-- Form password — muncul setelah konfirmasi -->
+                <template v-if="showPasswordForm">
+                  <VCol cols="12">
+                    <p class="text-caption text-medium-emphasis mb-3">
+                      <VIcon size="13" class="me-1">ri-lock-line</VIcon>
+                      Kosongkan jika tidak ingin mengubah password
+                    </p>
+                  </VCol>
+
+                  <VCol cols="12">
+                    <VTextField v-model="params.password" label="Password Baru" placeholder="Masukkan password baru"
+                      type="password" prepend-inner-icon="ri-lock-line" variant="outlined" density="comfortable"
+                      :rules="params.password ? [rules.password] : []" />
+                  </VCol>
+
+                  <VCol cols="12">
+                    <VTextField v-model="params.password_confirmation" label="Konfirmasi Password"
+                      placeholder="Ulangi password baru" type="password" prepend-inner-icon="ri-lock-2-line"
+                      variant="outlined" density="comfortable"
+                      :rules="params.password ? [rules.passwordConfirm] : []" />
+                  </VCol>
+                </template>
               </template>
 
               <!-- Tombol aksi saat edit -->
@@ -210,7 +312,8 @@ const handleCancel = () => {
                   <VBtn variant="flat" color="secondary" prepend-icon="ri-close-line" @click="handleCancel">
                     Batal
                   </VBtn>
-                  <VBtn variant="flat" color="info" prepend-icon="ri-save-line" type="submit">
+                  <VBtn variant="flat" color="info" prepend-icon="ri-save-line" :loading="authStore.loadingUpdate"
+                    type="submit">
                     Simpan
                   </VBtn>
                 </div>
@@ -219,12 +322,40 @@ const handleCancel = () => {
           </VForm>
         </VCardItem>
       </VCard>
+
+      <!-- Dialog Konfirmasi Ubah Password -->
+      <VDialog v-model="showConfirmPassword" max-width="360">
+        <VCard rounded="lg">
+          <VCardText class="pa-5 text-center">
+            <VAvatar color="warning" size="52" variant="tonal" class="mb-3">
+              <VIcon icon="ri-lock-line" size="26" />
+            </VAvatar>
+            <h3 class="mb-2">Ubah Password?</h3>
+            <p class="text-body-2 text-medium-emphasis mb-0">
+              Anda akan mengubah password akun ini. Pastikan Anda mengingat password baru yang akan dibuat.
+            </p>
+          </VCardText>
+          <VDivider />
+          <VCardText class="pa-4">
+            <div class="d-flex gap-2 justify-end">
+              <VBtn variant="tonal" color="secondary" @click="showConfirmPassword = false">
+                Batal
+              </VBtn>
+              <VBtn variant="flat" color="warning" @click="showConfirmPassword = false; showPasswordForm = true">
+                Ya, Ubah Password
+              </VBtn>
+            </div>
+          </VCardText>
+        </VCard>
+      </VDialog>
     </VCol>
   </VRow>
 </template>
 
 <style scoped>
 .profile-header-card {
+  overflow: visible;
+  position: relative;
   background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgba(var(--v-theme-primary), 0.8) 100%);
 }
 
@@ -251,5 +382,16 @@ const handleCancel = () => {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
+}
+
+.alert-slide-enter-active,
+.alert-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.alert-slide-enter-from,
+.alert-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>
