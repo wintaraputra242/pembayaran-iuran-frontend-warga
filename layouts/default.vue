@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import BottomNav from './components/BottomNav.vue';
+
+const uiStore = useUiStore()
 </script>
 
 <template>
@@ -17,6 +19,11 @@ import BottomNav from './components/BottomNav.vue';
       </VMain>
 
       <BottomNav />
+
+      <WargaChatbotWidget />
+
+      <ErrorDialog :show="uiStore.errorDialog.show" :title="uiStore.errorDialog.title"
+        :message="uiStore.errorDialog.message" @close="uiStore.closeError" />
     </div>
   </div>
 </template>

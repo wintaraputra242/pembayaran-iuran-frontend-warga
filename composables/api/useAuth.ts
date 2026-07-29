@@ -58,7 +58,7 @@ export const useAuth = () => {
     password?: string
     password_confirmation?: string
   }): Promise<any> => {
-    const res = await api('/auth/update-profile', {
+    const res = await api('/auth/profile', {
       method: 'PUT',
       body,
     })

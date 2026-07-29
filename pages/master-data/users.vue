@@ -17,7 +17,7 @@ const handleCloseFormData = () => {
 const itemSelected = ref<object | null>(null)
 
 const handleEditData = (item: object) => {
-  showFormData.value = true 
+  showFormData.value = true
   isEdit.value = true
   itemSelected.value = item
 }
@@ -54,7 +54,7 @@ const handleDeleteData = (item: object) => {
   confirmOptions.confirmColor = 'error'
   confirmOptions.confirmIcon = 'ri-delete-bin-line'
 
-  showConfirmation.value = true 
+  showConfirmation.value = true
   itemSelected.value = item
 }
 
@@ -67,8 +67,8 @@ const handleShowAnggota = (item: object) => {
   setTimeout(() => {
     isLoadingGetAnggota.value = false
   }, 5000)
-  
-  showAnggota.value = true 
+
+  showAnggota.value = true
   itemSelected.value = item
 }
 
@@ -80,21 +80,21 @@ const handleUpdateStatus = (item: object) => {
   confirmOptions.confirmColor = 'error'
   confirmOptions.confirmIcon = 'ri-eye-off-line'
 
-  showConfirmation.value = true 
+  showConfirmation.value = true
   itemSelected.value = item
 }
 
 const isCreate = ref(false)
 
 const handleCreate = () => {
-  showFormData.value = true 
+  showFormData.value = true
   isCreate.value = true
 }
 
 const isEditPassword = ref(false)
 
 const handleEditPassword = (item: object) => {
-  showFormData.value = true 
+  showFormData.value = true
   isEditPassword.value = true
   itemSelected.value = item
 }
@@ -105,32 +105,21 @@ const handleEditPassword = (item: object) => {
   <div>
     <h2 class="mb-3">Data Pengguna</h2>
     <VRow class="match-height">
-      <VCol
-        cols="12"
-      >
+      <VCol cols="12">
         <FormFilterUsers @show-form-data="handleCreate" />
       </VCol>
-  
-      <VCol
-        cols="12"
-        md="4"
-      >
+
+      <VCol cols="12" md="4">
         <DataTableUsers @edit="handleEditData" @delete="handleDeleteData" @edit-password="handleEditPassword" />
       </VCol>
     </VRow>
 
-    <DialogFormDataUsers :is-show="showFormData" :is-create="isCreate" :is-edit="isEdit" :is-edit-password="isEditPassword" :item="itemSelected" @close="handleCloseFormData" />
+    <DialogFormDataUsers :is-show="showFormData" :is-create="isCreate" :is-edit="isEdit"
+      :is-edit-password="isEditPassword" :item="itemSelected" @close="handleCloseFormData" />
 
-    <ConfirmDialog
-      v-model="showConfirmation"
-      :title="confirmOptions.title"
-      :message="confirmOptions.message"
-      :confirm-text="confirmOptions.confirmText"
-      :cancel-text="confirmOptions.cancelText"
-      :confirm-color="confirmOptions.confirmColor"
-      :confirm-icon="confirmOptions.confirmIcon"
-      :loading="isLoadingConfirm"
-      @confirm="deleteItem"
-    />
+    <ConfirmDialog v-model="showConfirmation" :title="confirmOptions.title" :message="confirmOptions.message"
+      :confirm-text="confirmOptions.confirmText" :cancel-text="confirmOptions.cancelText"
+      :confirm-color="confirmOptions.confirmColor" :confirm-icon="confirmOptions.confirmIcon"
+      :loading="isLoadingConfirm" @confirm="deleteItem" />
   </div>
 </template>

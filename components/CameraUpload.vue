@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineEmits, defineProps, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps<{
   modelValue: File | null
@@ -14,6 +14,14 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null)
 const preview = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png']
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
+
+const isAllowedFile = (file: File) => {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return ALLOWED_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(ext)
+}
 
 // Generate preview jika modelValue dari parent berubah
 watch(
@@ -47,6 +55,23 @@ const validate = () => {
 // Re-validate setiap kali modelValue berubah
 watch(() => props.modelValue, () => validate())
 
+watch(
+  () => props.modelValue,
+  (newVal, oldVal) => {
+    if (preview.value) {
+      URL.revokeObjectURL(preview.value)
+    }
+
+    if (!newVal) {
+      preview.value = null
+      return
+    }
+
+    preview.value = URL.createObjectURL(newVal)
+  },
+  { immediate: true }
+)
+
 // Open camera
 const openCamera = () => {
   fileInput.value?.click()
@@ -58,6 +83,13 @@ const handleFileChange = (e: Event) => {
   const file = target.files?.[0]
 
   if (!file) return
+
+  if (!isAllowedFile(file)) {
+    errorMessage.value = 'Format file harus JPG, JPEG, atau PNG.'
+    emit('update:modelValue', null)
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
 
   preview.value = URL.createObjectURL(file)
 
@@ -75,42 +107,33 @@ const removeImage = () => {
   validate()
 }
 
-watch(() => props.isErrorSubmit, (newVal) => newVal ? validate() : () => {})
+watch(() => props.isErrorSubmit, (newVal) => {
+  if (newVal) validate()
+})
 </script>
 
 <template>
   <div>
     <!-- Dropzone -->
-    <div
-      class="d-flex flex-column justify-center align-center rounded-lg border border-dashed py-6 px-4 cursor-pointer"
+    <div class="d-flex flex-column justify-center align-center rounded-lg border border-dashed py-6 px-4 cursor-pointer"
       :class="{
         'border-grey': !errorMessage,
         'border-error': !!errorMessage
-      }"
-      style="min-height: 180px;"
-      @click="openCamera"
-    >
+      }" style="min-height: 180px;" @click="openCamera">
       <template v-if="!preview">
         <VIcon size="48" class="mb-2">ri-camera-line</VIcon>
         <p class="text-body-2 text-center">
           Klik untuk mengambil foto bukti pembayaran
         </p>
+        <p class="text-caption text-medium-emphasis text-center mb-0">
+          Format: JPG, JPEG, PNG
+        </p>
       </template>
 
       <template v-else>
-        <img
-          :src="preview"
-          alt="Preview"
-          class="w-100 rounded-lg"
-          style="object-fit: cover;"
-        />
+        <img :src="preview" alt="Preview" class="w-100 rounded-lg" style="object-fit: cover;" />
 
-        <VBtn
-          size="small"
-          color="error"
-          class="mt-3"
-          @click.stop="removeImage"
-        >
+        <VBtn size="small" color="error" class="mt-3" @click.stop="removeImage">
           <VIcon class="me-1">ri-delete-bin-line</VIcon>
           Hapus Foto
         </VBtn>
@@ -123,14 +146,8 @@ watch(() => props.isErrorSubmit, (newVal) => newVal ? validate() : () => {})
     </p>
 
     <!-- hidden input -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/*"
-      capture="environment"
-      class="d-none"
-      @change="handleFileChange"
-    />
+    <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" capture="environment"
+      class="d-none" @change="handleFileChange" />
   </div>
 </template>
 

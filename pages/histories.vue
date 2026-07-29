@@ -12,7 +12,8 @@ const handleShowBuktiBayar = (src: string) => {
 }
 
 watch(() => pembayaranStore.filters.tanggal, async (val) => {
-  if (val?.length === 2 || val?.length === 0) {
+  // Handle semua kondisi — array lengkap, kosong, null, atau undefined
+  if (val?.length === 2 || !val || val?.length === 0) {
     pembayaranStore.reload = true
     pembayaranStore.riwayatList = []
     await pembayaranStore.fetchRiwayat({ page: 1 })

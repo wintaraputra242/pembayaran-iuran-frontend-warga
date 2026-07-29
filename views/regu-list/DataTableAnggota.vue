@@ -94,7 +94,7 @@ const tab = ref('table')
 const defaultParamsAddAnggota = {
   warga: null,
 }
-const params = reactive({...defaultParamsAddAnggota})
+const params = reactive({ ...defaultParamsAddAnggota })
 
 const rules = {
   required: (v: any) => !!v || "Field wajib diisi",
@@ -140,9 +140,7 @@ const btnTabStyle: any = {
 <template>
   <VCard class="pa-0">
     <VCardItem class="pa-2">
-      <div
-        class="table-scroll-wrapper"
-      >
+      <div class="table-scroll-wrapper">
         <VTable fixed-header height="400px" class="my-table">
           <thead>
             <tr>
@@ -152,19 +150,28 @@ const btnTabStyle: any = {
               <th class="text-center" style="width: 180px">Status</th>
             </tr>
           </thead>
-  
+
           <tbody>
             <tr v-for="(item, i) in dataDummy" :key="item.id">
               <td>{{ i + 1 }}</td>
               <td>{{ item?.nama }}</td>
-              <td>{{ item?.no_hp }}</td>
+              <td>
+                <a v-if="item?.no_hp" :href="`https://wa.me/${item.no_hp.replace(/\D/g, '').replace(/^0/, '62')}`"
+                  target="_blank" rel="noopener noreferrer"
+                  class="text-primary text-decoration-none d-inline-flex align-center gap-1">
+                  <VIcon icon="ri-whatsapp-line" size="14" color="success" />
+                  {{ item.no_hp }}
+                </a>
+                <span v-else class="text-medium-emphasis">-</span>
+              </td>
               <td align="center">
-                <v-chip :color="item.status === 'Ketua Regu' ? 'info' : ''" :prepend-icon="item.status === 'Ketua Regu' ? 'ri-vip-crown-line' : ''">
+                <v-chip :color="item.status === 'Ketua Regu' ? 'info' : ''"
+                  :prepend-icon="item.status === 'Ketua Regu' ? 'ri-vip-crown-line' : ''">
                   {{ item?.status }}
                 </v-chip>
               </td>
             </tr>
-  
+
             <!-- Loading -->
             <tr v-if="isLoading">
               <td colspan="4" rowspan="2" class="text-center py-3">

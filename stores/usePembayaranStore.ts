@@ -9,6 +9,7 @@ export const usePembayaranStore = defineStore('pembayaran', {
     monthsList: null as any,
     meta: null as PaginationMeta | null,
     loading: false,
+    loadingQris: false,
     reload: false,
     page: 0,
 
@@ -19,6 +20,7 @@ export const usePembayaranStore = defineStore('pembayaran', {
       tanggal: [] as string[],
     },
 
+    qrisData: null as { image: string; nama_rekening: string; nomor_rekening: string; keterangan: string } | null,
   }),
 
   getters: {
@@ -61,6 +63,10 @@ export const usePembayaranStore = defineStore('pembayaran', {
         if (this.filters.tanggal?.length === 2) {
           newFilter.start_date = new Date(this.filters.tanggal[0]).toISOString().split('T')[0]
           newFilter.end_date = new Date(this.filters.tanggal[1]).toISOString().split('T')[0]
+        } else {
+          // Pastikan tidak ada sisa filter tanggal
+          delete newFilter.start_date
+          delete newFilter.end_date
         }
 
         console.log(this.filters)
@@ -82,11 +88,19 @@ export const usePembayaranStore = defineStore('pembayaran', {
       }
     },
 
-    async fetchPayment(body: {
-      id_informasi_iuran: number
-      bulan?: number[]
-      note?: string
-    }) {
+    async fetchQris() {
+      const composable = usePembayaran()
+      this.loadingQris = true
+
+      try {
+        const res = await composable.getQris()
+        this.qrisData = res?.data
+      } finally {
+        this.loadingQris = false
+      }
+    },
+
+    async fetchPayment(body: FormData) {
       const composable = usePembayaran()
       this.loading = true
 
@@ -97,6 +111,7 @@ export const usePembayaranStore = defineStore('pembayaran', {
         this.loading = false
       }
     },
+
 
     async fetchPaidMonths() {
       const composable = usePembayaran()

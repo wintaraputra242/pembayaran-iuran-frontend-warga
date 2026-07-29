@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', {
     fetched: false,
     token: import.meta.client ? (localStorage.getItem('auth_token') ?? '') : '',
     loading: false,
+    loadingUpdate: false,
   }),
 
   getters: {
@@ -49,7 +50,7 @@ export const useAuthStore = defineStore('auth', {
 
     async updateProfile(body: any) {
       const composable = useAuth()
-      this.loading = true
+      this.loadingUpdate = true
 
       try {
         const res = await composable.updateProfile(body)
@@ -58,7 +59,7 @@ export const useAuthStore = defineStore('auth', {
         }
         return res
       } finally {
-        this.loading = false
+        this.loadingUpdate = false
       }
     }
   },

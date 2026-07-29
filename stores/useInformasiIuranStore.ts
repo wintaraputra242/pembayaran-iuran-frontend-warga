@@ -15,7 +15,7 @@ export const useInformasiIuranStore = defineStore('informasi-iuran', {
     filters: {
       keyword: '',
       jenis_iuran: '',
-      status_bayar: '' as 'sudah_bayar' | 'belum_bayar' | '',
+      status_bayar: null as 'sudah_bayar' | 'belum_bayar' | 'approved' | 'rejected' | 'pending' | '' | null,
     },
   }),
 
@@ -91,7 +91,7 @@ export const useInformasiIuranStore = defineStore('informasi-iuran', {
       this.filters = {
         keyword: '',
         jenis_iuran: '',
-        status_bayar: '',
+        status_bayar: null,
       }
     },
   },

@@ -32,8 +32,7 @@ const tab = ref('nik_input')
 
 const rules = {
   nik: (v: string) => {
-    if (!v) return 'NIK wajib diisi'
-    if (v.length < 16) return 'NIK harus 16 digit'
+    if (!v) return 'NIK / No. Handphone wajib diisi'
     return true
   },
 
@@ -56,13 +55,14 @@ const rules = {
 }
 
 const handleNIK = (value: string) => {
+  // Hapus filter digit only dan slice 16
+  // karena no HP format Indonesia dimulai 08xxx
   form.value.nik = value
-    .replace(/\D/g, '')
-    .slice(0, 16)
 }
 
 const handleCheckNik = async () => {
-  if (form.value.nik.length < 16) return
+  // Hapus validasi length 16 — karena sekarang bisa NIK atau no HP
+  if (!form.value.nik) return
 
   isLoading.value = true
   errorMessage.value = ''
@@ -76,7 +76,9 @@ const handleCheckNik = async () => {
       tab.value = 'create_password'
     }
   } catch (e: any) {
-    errorMessage.value = e?.data?.message ?? 'Terjadi kesalahan, coba lagi.'
+    console.log(e);
+
+    errorMessage.value = e?.raw?._data?.message ?? 'Terjadi kesalahan, coba lagi.'
   } finally {
     isLoading.value = false
   }
@@ -109,7 +111,7 @@ const handleLogin = async () => {
       router.push('/')
     }
   } catch (e: any) {
-    errorMessage.value = e?.data?.message ?? 'Login gagal, coba lagi.'
+    errorMessage.value = e?.raw?._data?.message ?? 'Login gagal, coba lagi.'
   } finally {
     isLoading.value = false
   }
@@ -149,12 +151,13 @@ const handleCreatePassword = async () => {
   }
 }
 
-
 const handleBack = () => {
   tab.value = 'nik_input'
   form.value.password = ''
   errorMessage.value = ''
 }
+
+const adminPhone = useRuntimeConfig().public.adminPhone
 </script>
 
 <template>
@@ -183,12 +186,12 @@ const handleBack = () => {
               <VForm @submit.prevent="handleCheckNik">
                 <VRow>
                   <VCol cols="12">
-                    <VTextField :id="useId()" v-model="form.nik" label="NIK" type="text" :rules="[rules.nik]"
-                      :disabled="isLoading" @update:model-value="handleNIK" />
+                    <VTextField :id="useId()" v-model="form.nik" label="NIK / No. Handphone" type="text"
+                      :rules="[rules.nik]" :disabled="isLoading" @update:model-value="handleNIK" />
                   </VCol>
 
                   <VCol cols="12">
-                    <VBtn block type="submit" :loading="isLoading" :disabled="form.nik.length < 16">
+                    <VBtn block type="submit" :loading="isLoading">
                       Kirim
                     </VBtn>
                   </VCol>
@@ -212,6 +215,14 @@ const handleBack = () => {
                       :type="isPasswordVisible ? 'text' : 'password'" autocomplete="password" :rules="[rules.password]"
                       :disabled="isLoading" :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
                       @click:append-inner="isPasswordVisible = !isPasswordVisible" />
+
+                    <!-- Lupa Password -->
+                    <div class="text-end mt-1">
+                      <a :href="`https://wa.me/${adminPhone}?text=${encodeURIComponent('Halo, saya lupa password akun iuran warga. Mohon bantu reset password saya.')}`"
+                        target="_blank" class="text-caption text-primary" style="text-decoration: none;">
+                        Lupa kata sandi?
+                      </a>
+                    </div>
                   </VCol>
 
                   <VCol cols="12">

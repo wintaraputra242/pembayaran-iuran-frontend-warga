@@ -12,16 +12,31 @@ const handleShowBuktiBayar = () => {
   showPaymentProof.value = true
 }
 
-onMounted(async () => {
+const handleReload = async () => {
   await anggotaReguStore.fetchAnggotaRegu()
+}
+
+onMounted(async () => {
+  // Hanya fetch kalau belum ada data
+  if (!anggotaReguStore.regu) {
+    await anggotaReguStore.fetchAnggotaRegu()
+  }
 })
 </script>
 
 <template>
   <div>
-    <div class="mb-4">
-      <h2>Anggota</h2>
-      <span>Menampilkan daftar anggota dalam regu yang diikuti oleh warga.</span>
+    <div class="mb-4 d-flex align-end justify-space-between gap-5">
+      <div>
+        <h2>Anggota</h2>
+        <span>Menampilkan daftar anggota dalam regu yang diikuti oleh warga.</span>
+      </div>
+
+      <!-- Tombol reload -->
+      <VBtn icon variant="tonal" color="primary" size="small" :loading="anggotaReguStore.loading" @click="handleReload">
+        <VIcon icon="ri-refresh-line" size="18" />
+        <VTooltip activator="parent" location="left">Refresh Data</VTooltip>
+      </VBtn>
     </div>
 
     <template v-if="anggotaReguStore.loading">
