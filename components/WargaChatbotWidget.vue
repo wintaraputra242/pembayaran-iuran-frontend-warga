@@ -271,7 +271,7 @@ const formatMessage = (text: string) =>
           </div>
 
           <!-- Input -->
-          <div
+          <!-- <div
             style="padding: 10px 12px; background: #ffffff; border-top: 1px solid rgba(0,0,0,0.08); flex-shrink: 0; display: flex; gap: 8px; align-items: center;">
             <input v-model="inputMessage" placeholder="Ketik pertanyaan Anda..." style="
                 flex: 1;
@@ -297,7 +297,7 @@ const formatMessage = (text: string) =>
               @click="handleSend">
               <VIcon icon="ri-send-plane-fill" size="16" color="white" />
             </button>
-          </div>
+          </div> -->
         </div>
       </Transition>
     </Teleport>

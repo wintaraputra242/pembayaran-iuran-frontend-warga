@@ -134,6 +134,20 @@ const triggerSuccessAlert = () => {
   }, 4000) // hilang setelah 4 detik
 }
 
+const handleNamaWargaInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const cursorPos = target.selectionStart ?? target.value.length
+
+  const upperValue = target.value.toUpperCase()
+  params.nama_warga = upperValue
+
+  // Kembalikan posisi kursor setelah Vue selesai re-render input,
+  // supaya tidak lompat ke akhir teks.
+  nextTick(() => {
+    target.setSelectionRange(cursorPos, cursorPos)
+  })
+}
+
 onUnmounted(() => {
   if (alertTimer) clearTimeout(alertTimer)
 })
@@ -250,8 +264,7 @@ onUnmounted(() => {
               <VCol cols="12">
                 <VTextField v-model="params.nama_warga" label="Nama Lengkap" placeholder="Masukkan nama warga"
                   :rules="[rules.nama]" :readonly="!isEditProfile" prepend-inner-icon="ri-user-line" variant="outlined"
-                  density="comfortable"
-                  @input="params.nama_warga = ($event.target as HTMLInputElement).value.toUpperCase()" />
+                  density="comfortable" @input="handleNamaWargaInput" />
               </VCol>
 
               <VCol cols="12">

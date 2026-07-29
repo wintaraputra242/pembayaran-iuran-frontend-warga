@@ -76,7 +76,9 @@ const handleCheckNik = async () => {
       tab.value = 'create_password'
     }
   } catch (e: any) {
-    errorMessage.value = e?.data?.message ?? 'Terjadi kesalahan, coba lagi.'
+    console.log(e);
+
+    errorMessage.value = e?.raw?._data?.message ?? 'Terjadi kesalahan, coba lagi.'
   } finally {
     isLoading.value = false
   }
@@ -109,7 +111,7 @@ const handleLogin = async () => {
       router.push('/')
     }
   } catch (e: any) {
-    errorMessage.value = e?.data?.message ?? 'Login gagal, coba lagi.'
+    errorMessage.value = e?.raw?._data?.message ?? 'Login gagal, coba lagi.'
   } finally {
     isLoading.value = false
   }
