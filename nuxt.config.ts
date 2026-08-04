@@ -195,7 +195,7 @@ export default defineNuxtConfig({
 
     manifest: {
       name: 'Pembayaran Iuran Br. Trijata',
-      short_name: 'Iuran Trijata',
+      short_name: 'Pembayaran Iuran Trijata',
       description: 'Aplikasi pembayaran iuran Banjar Trijata',
       theme_color: '#ffffff',
       background_color: '#ffffff',

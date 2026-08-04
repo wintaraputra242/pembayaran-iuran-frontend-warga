@@ -56,28 +56,6 @@ const paidMonths = computed<number[]>(() => {
   return [...new Set([...approved, ...pending])]
 })
 
-// const monthsWithStatus = computed(() =>
-//   months.map(month => {
-//     const approved = props.item?.bulan_approved ?? []
-//     const pending = props.item?.bulan_pending ?? []
-//     const rejected = props.item?.bulan_rejected ?? []
-
-//     const isApproved = approved.includes(month.value)
-//     const isPending = pending.includes(month.value)
-//     const isRejected = rejected.includes(month.value)
-//     const isPaid = isApproved || isPending  // disable kalau approved/pending
-
-//     return {
-//       ...month,
-//       isPaid,
-//       isApproved,
-//       isPending,
-//       isRejected,
-//     }
-//   })
-// )
-
-
 watch(paidMonths, (paid) => {
   // Reset bulan ke hanya paid months, user pilih sendiri bulan lainnya
   params.bulan = [...paid]
@@ -106,9 +84,11 @@ const rules = {
   metode_bayar: (v: string) => !!v || 'Metode pembayaran wajib dipilih',
 }
 
-// Ketika pilih QRIS, fetch data QRIS dan tampilkan dialog
+// Ketika pilih QRIS/Transfer, fetch data terkait
 const handleMetodeChange = async (val: string | null) => {
   if (val === 'qris') {
+    await pembayaranStore.fetchQris()
+  } else if (val === 'transfer') {
     await pembayaranStore.fetchQris()
   }
 }
@@ -159,6 +139,21 @@ const handleDownloadQris = async () => {
   }
 }
 
+// Salin nomor rekening ke clipboard
+const copied = ref(false)
+
+const copyNomorRekening = async () => {
+  if (!pembayaranStore.qrisData?.nomor_rekening) return
+
+  try {
+    await navigator.clipboard.writeText(pembayaranStore.qrisData.nomor_rekening)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch (e) {
+    console.error('Gagal menyalin nomor rekening', e)
+  }
+}
+
 const bulanMulaiBayar = computed(() => props.item?.bulan_mulai_bayar ?? 1)
 const bulanMaksimalBayar = computed(() => props.item?.bulan_maksimal_bayar ?? 12)
 
@@ -167,10 +162,12 @@ const monthsWithStatus = computed(() =>
     const approved = props.item?.bulan_approved ?? []
     const pending = props.item?.bulan_pending ?? []
     const rejected = props.item?.bulan_rejected ?? []
+    const cancelled = props.item?.bulan_cancelled ?? []
 
     const isApproved = approved.includes(month.value)
     const isPending = pending.includes(month.value)
     const isRejected = rejected.includes(month.value)
+    const isCancelled = cancelled.includes(month.value)
     const isPaid = isApproved || isPending
     const isSebelumBergabung = month.value < bulanMulaiBayar.value
     const isSesudahNonaktif = month.value > bulanMaksimalBayar.value
@@ -181,6 +178,7 @@ const monthsWithStatus = computed(() =>
       isApproved,
       isPending,
       isRejected,
+      isCancelled,
       isSebelumBergabung,
       isSesudahNonaktif,
       isDisabled: isPaid || isSebelumBergabung || isSesudahNonaktif,
@@ -193,6 +191,10 @@ const canSubmit = computed(() => {
   if (isBulanan.value && bulanBelumBayar.value.length === 0) return false
   return true
 })
+
+const availableMonths = computed(() =>
+  monthsWithStatus.value.filter(m => !m.isDisabled)
+)
 </script>
 
 <template>
@@ -226,10 +228,12 @@ const canSubmit = computed(() => {
                     <VChip v-else-if="item.raw.isRejected" color="error" size="x-small" label>
                       Ditolak — Bisa Bayar Ulang
                     </VChip>
+                    <VChip v-else-if="item.raw.isCancelled" color="warning" size="x-small" label>
+                      Dibatalkan — Bisa Bayar Ulang
+                    </VChip>
                     <VChip v-else-if="item.raw.isSebelumBergabung" color="secondary" size="x-small" label>
                       Sebelum Bergabung
                     </VChip>
-                    <!-- Tambah ini -->
                     <VChip v-else-if="item.raw.isSesudahNonaktif" color="secondary" size="x-small" label>
                       Sudah Tidak Aktif
                     </VChip>
@@ -246,7 +250,7 @@ const canSubmit = computed(() => {
             </VSelect>
           </VCol>
 
-          <VCol v-if="isBulanan && bulanBelumBayar.length === 0 && paidMonths.length > 0" cols="12">
+          <VCol v-if="isBulanan && availableMonths.length === 0 && paidMonths.length > 0" cols="12">
             <VAlert type="success" variant="tonal" density="compact">
               Semua bulan yang tersedia sudah dibayar atau sedang menunggu validasi.
             </VAlert>
@@ -279,6 +283,40 @@ const canSubmit = computed(() => {
               Metode pembayaran wajib dipilih
             </p>
 
+            <!-- Info Rekening Transfer -->
+            <div v-if="params.metode_bayar === 'transfer'" class="mt-3">
+              <VCard variant="tonal" color="primary" rounded="lg">
+                <VCardText class="pa-4">
+                  <template v-if="pembayaranStore.loadingQris">
+                    <div class="d-flex justify-center align-center py-4">
+                      <VProgressCircular indeterminate color="primary" size="24" />
+                    </div>
+                  </template>
+
+                  <template v-else-if="pembayaranStore.qrisData">
+                    <div class="d-flex align-center gap-2 mb-2">
+                      <VIcon icon="ri-bank-line" size="20" color="primary" />
+                      <span class="text-caption text-medium-emphasis">Transfer ke rekening berikut</span>
+                    </div>
+
+                    <p class="text-body-2 mb-1">
+                      <span class="text-medium-emphasis">Atas Nama:</span>
+                      <span class="font-weight-medium ms-1">{{ pembayaranStore.qrisData.nama_rekening }}</span>
+                    </p>
+
+                    <div class="d-flex align-center justify-space-between mt-2 pa-2 rounded-lg"
+                      style="background: rgba(var(--v-theme-surface), 0.6);">
+                      <span class="text-h6 font-weight-bold">{{ pembayaranStore.qrisData.nomor_rekening }}</span>
+                      <IconBtn size="small" color="primary" @click="copyNomorRekening">
+                        <VIcon :icon="copied ? 'ri-check-line' : 'ri-file-copy-line'" size="18" />
+                      </IconBtn>
+                    </div>
+                    <p v-if="copied" class="text-caption text-success mt-1 mb-0">Nomor rekening disalin</p>
+                  </template>
+                </VCardText>
+              </VCard>
+            </div>
+
             <div v-if="params.metode_bayar === 'qris'" class="d-flex justify-end">
               <VBtn variant="flat" color="primary" size="small" class="mt-3" prepend-icon="ri-qr-code-line"
                 :loading="pembayaranStore.loadingQris" @click="showQrisDialog = true">
@@ -289,7 +327,21 @@ const canSubmit = computed(() => {
 
           <!-- Upload Bukti -->
           <VCol v-if="params.metode_bayar" cols="12">
-            <p class="text-body-2 font-weight-medium mb-2">Bukti Pembayaran</p>
+            <p class="text-body-2 font-weight-medium mb-1">Bukti Pembayaran</p>
+
+            <VAlert type="info" variant="tonal" density="compact" class="mb-3">
+              <p class="text-caption ma-0">
+                <template v-if="params.metode_bayar === 'transfer'">
+                  Silakan upload screenshot atau foto bukti transfer (mutasi rekening/struk ATM) yang menunjukkan
+                  nominal dan waktu transaksi dengan jelas.
+                </template>
+                <template v-else-if="params.metode_bayar === 'qris'">
+                  Silakan upload screenshot bukti pembayaran QRIS dari aplikasi e-wallet/m-banking Anda yang menunjukkan
+                  status "Berhasil" beserta nominalnya.
+                </template>
+              </p>
+            </VAlert>
+
             <CameraUpload v-model="buktiPembayaran" :is-error-submit="isErrorSubmit"
               :rules="[v => !!v || 'Bukti pembayaran wajib diupload']" />
           </VCol>
