@@ -92,6 +92,14 @@ const highlight = (text: string | null | undefined): string => {
     '<mark style="background: rgba(var(--v-theme-warning), 0.35); color: inherit; border-radius: 2px; padding: 0 2px;">$1</mark>'
   )
 }
+
+const formatDateShort = (date: string | Date) => {
+  const d = new Date(date)
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return { dayMonth: `${day}/${month}`, year: String(year) }
+}
 </script>
 
 <template>
@@ -117,24 +125,17 @@ const highlight = (text: string | null | undefined): string => {
         <VCard class="mb-0 d-flex flex-column" rounded="lg" border="sm" variant="elevated" position="relative"
           height="100%">
           <VCardTitle>
-            <div class="d-flex justify-space-between gap-1">
-              <div class="w-100">
-                <h5 class="clamp-2" style="text-wrap: wrap;" v-html="highlight(item.judul_iuran)" />
-                <p class="text-caption ma-0">{{ formatDateID(item.created_at) }}</p>
-              </div>
-
-              <div class="d-flex flex-column align-end gap-1">
-                <!-- Jenis Iuran -->
-                <VChip size="x-small" :color="item.jenis_iuran === 'kematian' ? 'error' : 'info'">
-                  {{ item.jenis_iuran === 'kematian' ? 'Kematian' : 'Bulanan' }}
-                </VChip>
-
-                <!-- Status Bayar -->
-                <VChip size="x-small" :color="statusBayarColor(item.status_bayar)">
-                  {{ statusBayarLabel(item.status_bayar) }}
-                </VChip>
+            <div class="d-flex justify-space-between align-start gap-2">
+              <h5 class="clamp-2" style="text-wrap: wrap;" v-html="highlight(item.judul_iuran)" />
+              <div class="text-secondary flex-shrink-0 text-end mt-1" style="font-size: 12px; line-height: 1.2;">
+                <div>{{ formatDateShort(item.created_at).dayMonth }}</div>
+                <div>{{ formatDateShort(item.created_at).year }}</div>
               </div>
             </div>
+
+            <VChip size="x-small" class="mt-1" :color="item.jenis_iuran === 'kematian' ? 'error' : 'info'">
+              {{ item.jenis_iuran === 'kematian' ? 'Kematian' : 'Bulanan' }}
+            </VChip>
           </VCardTitle>
 
           <VCardText class="px-4">
@@ -170,9 +171,17 @@ const highlight = (text: string | null | undefined): string => {
           <!-- Bottom section -->
           <VCardActions class="px-4 pb-3 pt-0" style="min-height: 80px;">
             <div class="position-absolute" style="bottom: 12px; right: 12px; left: 12px;">
-              <p class="pa-0 ma-0 mb-2 text-end font-weight-bold">
-                Rp. {{ Number(item.jumlah_iuran).toLocaleString('id-ID') }}
-              </p>
+
+              <!-- Status Bayar & Harga -->
+              <div class="d-flex justify-space-between align-center mb-2">
+                <VChip size="x-small" :color="statusBayarColor(item.status_bayar)">
+                  {{ statusBayarLabel(item.status_bayar) }}
+                </VChip>
+
+                <p class="pa-0 ma-0 font-weight-bold">
+                  Rp. {{ Number(item.jumlah_iuran).toLocaleString('id-ID') }}
+                </p>
+              </div>
 
               <div class="d-flex justify-end">
 

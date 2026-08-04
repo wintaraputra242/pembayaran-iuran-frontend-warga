@@ -21,6 +21,9 @@ export const usePembayaranStore = defineStore('pembayaran', {
     },
 
     qrisData: null as { image: string; nama_rekening: string; nomor_rekening: string; keterangan: string } | null,
+
+    rekeningData: null as { nama_rekening: string; nomor_rekening: string } | null,
+    loadingRekening: false,
   }),
 
   getters: {
@@ -99,6 +102,17 @@ export const usePembayaranStore = defineStore('pembayaran', {
         this.loadingQris = false
       }
     },
+
+    // async fetchRekening() {
+    //   this.loadingRekening = true
+    //   try {
+    //     const { api } = useApi()
+    //     const res = await api('/rekening') // sesuaikan endpoint aslinya
+    //     this.rekeningData = res.data
+    //   } finally {
+    //     this.loadingRekening = false
+    //   }
+    // },
 
     async fetchPayment(body: FormData) {
       const composable = usePembayaran()

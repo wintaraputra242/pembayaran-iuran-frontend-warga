@@ -77,7 +77,9 @@ const handleSubmit = async () => {
   if (!valid) return
 
   const body: Record<string, any> = {
-    nama_warga: params.nama_warga,
+    // Konversi ke uppercase di sini saja, sekali, sebelum dikirim —
+    // bukan tiap keystroke, supaya tidak mengganggu keyboard mobile.
+    nama_warga: params.nama_warga.toUpperCase(),
     alamat: params.alamat,
     no_hp: params.no_hp,
   }
@@ -134,19 +136,10 @@ const triggerSuccessAlert = () => {
   }, 4000) // hilang setelah 4 detik
 }
 
-const handleNamaWargaInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const cursorPos = target.selectionStart ?? target.value.length
-
-  const upperValue = target.value.toUpperCase()
-  params.nama_warga = upperValue
-
-  // Kembalikan posisi kursor setelah Vue selesai re-render input,
-  // supaya tidak lompat ke akhir teks.
-  nextTick(() => {
-    target.setSelectionRange(cursorPos, cursorPos)
-  })
-}
+// handleNamaWargaInput (cursor-preserve approach) DIHAPUS — masih rawan
+// bikin input hilang di mobile keyboard (composition/predictive text).
+// Uppercase sekarang cuma visual lewat CSS (class "uppercase-input"
+// di <style scoped> bawah), value asli baru dikonversi saat submit.
 
 onUnmounted(() => {
   if (alertTimer) clearTimeout(alertTimer)
@@ -264,7 +257,7 @@ onUnmounted(() => {
               <VCol cols="12">
                 <VTextField v-model="params.nama_warga" label="Nama Lengkap" placeholder="Masukkan nama warga"
                   :rules="[rules.nama]" :readonly="!isEditProfile" prepend-inner-icon="ri-user-line" variant="outlined"
-                  density="comfortable" @input="handleNamaWargaInput" />
+                  density="comfortable" class="uppercase-input" />
               </VCol>
 
               <VCol cols="12">
@@ -406,5 +399,9 @@ onUnmounted(() => {
 .alert-slide-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+.uppercase-input :deep(input) {
+  text-transform: uppercase;
 }
 </style>

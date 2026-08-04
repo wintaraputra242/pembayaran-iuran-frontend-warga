@@ -11,6 +11,7 @@ const { checkNik, login } = useAuth()
 const { requestPermissionAndGetToken } = useFirebaseMessaging()
 const router = useRouter()
 const vuetifyTheme = useTheme()
+const uiStore = useUiStore()
 
 
 const form = ref({
@@ -66,9 +67,12 @@ const handleCheckNik = async () => {
 
   isLoading.value = true
   errorMessage.value = ''
+  uiStore.closeError()
 
   try {
     const res = await checkNik({ nik: form.value.nik })
+
+    uiStore.closeError()
 
     if (res.data.has_password) {
       tab.value = 'password_input'
@@ -89,6 +93,7 @@ const handleLogin = async () => {
 
   isLoading.value = true
   errorMessage.value = ''
+  uiStore.closeError()
 
   try {
     const fcmToken = await requestPermissionAndGetToken().catch(() => null)
@@ -103,6 +108,8 @@ const handleLogin = async () => {
     const redirect = import.meta.client
       ? localStorage.getItem('redirect_after_login')
       : null
+
+    uiStore.closeError()
 
     if (redirect) {
       localStorage.removeItem('redirect_after_login')
@@ -123,6 +130,7 @@ const handleCreatePassword = async () => {
 
   isLoading.value = true
   errorMessage.value = ''
+  uiStore.closeError()
 
   try {
     const fcmToken = await requestPermissionAndGetToken().catch(() => null)
@@ -137,6 +145,8 @@ const handleCreatePassword = async () => {
     const redirect = import.meta.client
       ? localStorage.getItem('redirect_after_login')
       : null
+
+    uiStore.closeError()
 
     if (redirect) {
       localStorage.removeItem('redirect_after_login')

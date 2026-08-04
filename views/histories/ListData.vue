@@ -130,6 +130,11 @@ onUnmounted(() => {
                 <VIcon size="13" class="me-1">ri-time-line</VIcon>
                 {{ formatDateID(item.created_at) }}
               </p>
+              <!-- Diinput oleh -->
+              <p v-if="item.diinput_oleh" class="text-caption text-medium-emphasis ma-0 mt-1">
+                <VIcon size="13" class="me-1">ri-user-line</VIcon>
+                {{ item.diinput_oleh }}
+              </p>
             </div>
           </div>
 
