@@ -33,7 +33,7 @@ const tab = ref('nik_input')
 
 const rules = {
   nik: (v: string) => {
-    if (!v) return 'NIK / No. Handphone wajib diisi'
+    if (!v) return 'NIK / No. Whatsapp (WA) wajib diisi'
     return true
   },
 
@@ -173,11 +173,16 @@ const adminPhone = useRuntimeConfig().public.adminPhone
 <template>
   <div class="auth-wrapper d-flex align-center justify-center pa-4">
     <div style="max-width: 448px; width: 100%">
-      <div class="d-flex align-center flex-column gap-3 mb-4">
-        <VImg src="/logo.png" width="3rem" />
-        <h2 class="font-weight-medium text-xl text-uppercase text-center">
-          Pembayaran Iuran Banjar Trijata
-        </h2>
+      <div class="login-banner mb-4">
+        <VImg src="/banjar.jpeg" cover class="login-banner-img" />
+        <div class="login-banner-overlay d-flex align-center flex-column justify-center gap-2">
+          <VAvatar size="56" color="white" class="login-banner-logo">
+            <VImg src="/logo.png" width="2.25rem" />
+          </VAvatar>
+          <h2 class="login-banner-title text-uppercase text-center">
+            Pembayaran Iuran Banjar Trijata
+          </h2>
+        </div>
       </div>
 
       <VCard class="auth-card pa-2 pa-md-4" max-width="448" width="100%">
@@ -186,8 +191,8 @@ const adminPhone = useRuntimeConfig().public.adminPhone
 
             <!-- Step 1: Input NIK -->
             <VTabsWindowItem value="nik_input">
-              <h2 class="font-weight-medium text-xl mb-1">Masukkan NIK</h2>
-              <p class="mb-5">Silakan masukkan NIK Anda terlebih dahulu</p>
+              <h2 class="font-weight-medium text-xl mb-1">Masukkan NIK / No. Whatsapp (WA)</h2>
+              <p class="mb-5">Silakan masukkan NIK / No. Whatsapp (WA) Anda terlebih dahulu</p>
 
               <VAlert v-if="errorMessage" type="error" class="mb-4" density="compact">
                 {{ errorMessage }}
@@ -196,7 +201,7 @@ const adminPhone = useRuntimeConfig().public.adminPhone
               <VForm @submit.prevent="handleCheckNik">
                 <VRow>
                   <VCol cols="12">
-                    <VTextField :id="useId()" v-model="form.nik" label="NIK / No. Handphone" type="text"
+                    <VTextField :id="useId()" v-model="form.nik" label="NIK / No. Whatsapp (WA)" type="text"
                       :rules="[rules.nik]" :disabled="isLoading" @update:model-value="handleNIK" />
                   </VCol>
 
@@ -295,4 +300,35 @@ const adminPhone = useRuntimeConfig().public.adminPhone
 
 <style lang="scss">
 @use "@core/scss/template/pages/page-auth";
+
+.login-banner {
+  position: relative;
+  block-size: 160px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.login-banner-img {
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.login-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+.login-banner-logo {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.login-banner-title {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  padding-inline: 1rem;
+}
 </style>

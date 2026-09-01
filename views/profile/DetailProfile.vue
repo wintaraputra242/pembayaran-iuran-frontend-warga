@@ -261,10 +261,10 @@ onUnmounted(() => {
               </VCol>
 
               <VCol cols="12">
-                <VTextField v-model="params.no_hp" label="No. Handphone" placeholder="Masukkan no. handphone"
+                <VTextField v-model="params.no_hp" label="No. Whatsapp (WA)" placeholder="Masukkan No. Whatsapp (WA)"
                   :rules="[rules.phone]" :readonly="!isEditProfile" prepend-inner-icon="ri-phone-line"
                   variant="outlined" density="comfortable" inputmode="numeric"
-                  :hint="isEditProfile ? 'Pastikan no. handphone belum terdaftar di sistem. No. handphone digunakan untuk login.' : ''"
+                  :hint="isEditProfile ? 'Pastikan No. Whatsapp (WA) belum terdaftar di sistem. No. Whatsapp (WA) digunakan untuk login.' : ''"
                   :persistent-hint="isEditProfile" @input="handlePhoneInput" />
               </VCol>
 
@@ -360,13 +360,17 @@ onUnmounted(() => {
 
 <style scoped>
 .profile-header-card {
-  overflow: visible;
+  overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgba(var(--v-theme-primary), 0.8) 100%);
+  background:
+    linear-gradient(135deg, rgba(var(--v-theme-primary), 0.88) 0%, rgba(var(--v-theme-primary), 0.65) 100%),
+    url('/banjar.jpeg') center / cover no-repeat;
 }
 
 .profile-header-card :deep(.v-card-item) {
   color: white;
+  position: relative;
+  z-index: 1;
 }
 
 .profile-header-card :deep(h3),
