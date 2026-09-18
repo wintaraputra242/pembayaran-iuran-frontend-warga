@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<{
   isCreate: boolean
   isEdit: boolean
   isEditPassword: boolean
-  item?: object | null
+  item?: { name?: string; username?: string; role?: string } | null
 }>(), {
   isShow: false,
   isCreate: false,
@@ -20,9 +20,9 @@ const props = withDefaults(defineProps<{
 const form = ref(null)
 
 const defaultParams = {
-  name: '',
-  username: '',
-  role: null,
+  name: '' as string | undefined,
+  username: '' as string | undefined,
+  role: null as string | null | undefined,
   password: '',
   c_password: '',
 }
@@ -61,17 +61,9 @@ const rules = {
   }
 }
 
-watch(
-  () => params.nama_regu,
-  newVal => {
-    if (!newVal) return
-    params.nama_regu = newVal.toUpperCase()
-  }
-)
-
 const handleClose = () => {
-  form.value?.reset()
-  
+  (form.value as any)?.reset()
+
   emit('close')
 }
 
@@ -80,9 +72,9 @@ watch(
   newVal => {
     if (!newVal) return
 
-    params.name = props.item?.nama
-    params.username = props.item?.nama
-    params.role = props.item?.nama
+    params.name = props.item?.name
+    params.username = props.item?.username
+    params.role = props.item?.role
   }
 )
 

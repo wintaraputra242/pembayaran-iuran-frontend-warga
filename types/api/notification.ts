@@ -11,6 +11,9 @@ export interface Notification {
   action: string
   created_at: string
   updated_at: string
+  data?: {
+    id_informasi_iuran?: number
+  }
 }
 
 export interface GetNotificationsResponse {

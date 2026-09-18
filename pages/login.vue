@@ -80,8 +80,6 @@ const handleCheckNik = async () => {
       tab.value = 'create_password'
     }
   } catch (e: any) {
-    console.log(e);
-
     errorMessage.value = e?.raw?._data?.message ?? 'Terjadi kesalahan, coba lagi.'
   } finally {
     isLoading.value = false

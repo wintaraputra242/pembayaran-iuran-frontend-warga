@@ -12,7 +12,7 @@ const handleCloseFormData = () => {
   showFormData.value = false
 }
 
-const itemSelected = ref<object | null>(null)
+const itemSelected = ref<any>(null)
 
 const handleEditData = (item: object) => {
   showFormData.value = true 
@@ -70,7 +70,7 @@ const handleShowAnggota = (item: object) => {
   itemSelected.value = item
 }
 
-const handleUpdateStatus = (item: object) => {
+const handleUpdateStatus = (item: any) => {
   confirmOptions.title = 'Nonaktif Warga?'
   confirmOptions.message = `Apakah Anda yakin ingin mengnonaktifkan data informasi iuran ${item?.nama}?.`
   confirmOptions.confirmText = 'Nonaktif'

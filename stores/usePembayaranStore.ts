@@ -72,8 +72,6 @@ export const usePembayaranStore = defineStore('pembayaran', {
           delete newFilter.end_date
         }
 
-        console.log(this.filters)
-
         const res = await composable.getRiwayat({
           page: params?.page,
           per_page: params?.per_page,

@@ -54,8 +54,7 @@ const handleExportExcel = () => {
   confirmOptions.confirmColor = 'success'
   confirmOptions.confirmIcon = 'ri-export-line'
 
-  showConfirmation.value = true 
-  itemSelected.value = item
+  showConfirmation.value = true
 }
 
 const showPaymentProof = ref(false)

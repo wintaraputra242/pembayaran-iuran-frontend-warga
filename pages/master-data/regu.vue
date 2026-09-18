@@ -19,7 +19,7 @@ const handleCloseShowAnggota = () => {
   showAnggota.value = false
 }
 
-const itemSelected = ref<object | null>(null)
+const itemSelected = ref<any>(null)
 
 const handleEditData = (item: object) => {
   showFormData.value = true 

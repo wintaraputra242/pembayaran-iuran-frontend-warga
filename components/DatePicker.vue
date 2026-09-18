@@ -2,10 +2,11 @@
 import { VueDatePicker } from "@vuepic/vue-datepicker"
 import "@vuepic/vue-datepicker/dist/main.css"
 import { id } from 'date-fns/locale'
+import type { PropType } from "vue"
 import { computed, ref, watch } from "vue"
 
 const props = defineProps({
-  modelValue: [String, Date, Array, Object],
+  modelValue: { type: [String, Date, Array, Object] as PropType<any>, default: undefined },
   label: String,
   placeholder: String,
   format: { type: String, default: "dd/MM/yyyy" },
@@ -13,15 +14,15 @@ const props = defineProps({
   range: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   clearable: { type: Boolean, default: true },
-  rules: { type: Array, default: () => [] },
+  rules: { type: Array as PropType<Array<(v: any) => true | string>>, default: () => [] },
   monthPicker: { type: Boolean, default: false },
-  disabledDates: { type: Array, default: () => [] },
+  disabledDates: { type: Array as PropType<any[]>, default: () => [] },
   showDatePicker: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(["update:modelValue"])
 
-const model = computed({
+const model = computed<any>({
   get: () => props.modelValue,
   set: (v) => emit("update:modelValue", v),
 })

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ReguDetail } from '@/types/api/anggota-regu';
 
 const emit = defineEmits<{
   (e: 'setLeader', item: object): void;
@@ -11,12 +12,12 @@ const emit = defineEmits<{
 const props = withDefaults(defineProps<{
   isShow: boolean
   data: object[] | null
-  item: object | null
+  item: ReguDetail | null
   isLoading: boolean
 }>(), {
   isShow: false,
   data: () => ([]),
-  item: () => ({}),
+  item: null,
   isLoading: false,
 })
 

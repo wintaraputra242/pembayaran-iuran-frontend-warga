@@ -1,5 +1,7 @@
 <script setup lang="ts">
+// @ts-expect-error - dropzone-vue3 ships the base Dropzone.js type defs, not the Vue wrapper component's
 import VueDropzone from 'dropzone-vue3';
+import type { PropType } from 'vue';
 import { computed, ref } from 'vue';
 
 // Props fleksibel
@@ -17,7 +19,7 @@ const props = defineProps({
 
   // --- RULES mirip Vuetify ---
   rules: {
-    type: Array,
+    type: Array as PropType<Array<(v: any) => true | string>>,
     default: () => [],
   },
 })
@@ -78,7 +80,7 @@ function handleRemoved(event: any) {
     dzRef.value.dropzone.removeFile(event)
     files.value = {}
   }
-  if (dzRef.value.dropzone.options.maxFiles > 1) files.value = files.value?.filter(f => f.name !== event.file.name)
+  if (dzRef.value.dropzone.options.maxFiles > 1) files.value = files.value?.filter((f: any) => f.name !== event.file.name)
 
   props.onEvents.removedFile?.(event)
 }
@@ -100,8 +102,6 @@ function formatSize(bytes: number) {
 
 // Tentukan icon berdasarkan file mimetype
 function getFileIcon(file: any) {
-  console.log(file)
-
   const name = file.name.toLowerCase()
 
   const iconFileFormats = {

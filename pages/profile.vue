@@ -4,8 +4,6 @@ import DetailProfile from '@/views/profile/DetailProfile.vue';
 const router = useRouter()
 const authStore = useAuthStore()
 
-console.log(authStore.user);
-
 const handleLogout = async () => {
   await authStore.logout()
   router.replace('/login')
