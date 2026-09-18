@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useApi } from '@/composables/api/useApi';
+import type { InformasiIuran } from '@/types/api/informasi-iuran';
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -7,12 +8,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  item: {
-    id: number
-    judul_iuran: string
-    jenis_iuran: string
-    jumlah_iuran: number
-  } | null
+  item: InformasiIuran | null
 }>()
 
 const pembayaranStore = usePembayaranStore()
@@ -45,7 +41,6 @@ const months = [
 
 const paidMonths = computed<number[]>(() => {
   const item = props.item
-  console.log(item)
 
   if (!item) return []
 
@@ -86,9 +81,7 @@ const rules = {
 
 // Ketika pilih QRIS/Transfer, fetch data terkait
 const handleMetodeChange = async (val: string | null) => {
-  if (val === 'qris') {
-    await pembayaranStore.fetchQris()
-  } else if (val === 'transfer') {
+  if (val === 'qris' || val === 'transfer') {
     await pembayaranStore.fetchQris()
   }
 }

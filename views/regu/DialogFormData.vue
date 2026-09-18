@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { ReguDetail } from '@/types/api/anggota-regu';
+
 const emit = defineEmits<{
   (e: 'reload'): void;
   (e: 'close'): void;
@@ -7,7 +9,7 @@ const emit = defineEmits<{
 const props = withDefaults(defineProps<{
   isShow: boolean
   isEdit: boolean
-  item?: object | null
+  item?: ReguDetail | null
 }>(), {
   isShow: false,
   isEdit: false,
@@ -39,8 +41,8 @@ watch(
 )
 
 const handleClose = () => {
-  form.value?.reset()
-  
+  (form.value as any)?.reset()
+
   emit('close')
 }
 
@@ -49,7 +51,7 @@ watch(
   newVal => {
     if (!newVal) return
 
-    params.nama_regu = props.item?.nama
+    params.nama_regu = props.item?.nama_regu ?? ''
   }
 )
 </script>

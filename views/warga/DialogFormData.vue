@@ -7,7 +7,7 @@ const emit = defineEmits<{
 const props = withDefaults(defineProps<{
   isShow: boolean
   isEdit: boolean
-  item?: object | null
+  item?: { id?: number; nama?: string; info?: string; created_at?: string } | null
 }>(), {
   isShow: false,
   isEdit: false,
@@ -16,10 +16,10 @@ const props = withDefaults(defineProps<{
 const form = ref(null)
 
 const defaultParams = {
-  nik: '',
-  nama_warga: '',
-  alamat: '',
-  no_hp: '',
+  nik: '' as string | number | undefined,
+  nama_warga: '' as string | undefined,
+  alamat: '' as string | undefined,
+  no_hp: '' as string | undefined,
   status_keaktifan: 'aktif',
 }
 const params = reactive({...defaultParams})
@@ -49,9 +49,7 @@ const dropzoneEvents = {
     selectedFile.value = null
   },
 
-  success: (file: File, response: any) => {
-    console.log("Success:", response)
-  },
+  success: () => {},
 
   error: (file: File, message: any) => {
     console.error("Error:", message)
@@ -111,9 +109,8 @@ watch(
 )
 
 const handleClose = () => {
-  
-  form.value?.reset()
-  
+  (form.value as any)?.reset()
+
   emit('close')
 }
 

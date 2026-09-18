@@ -25,8 +25,6 @@ export const useFirebaseMessaging = () => {
         // serviceWorkerRegistration: await navigator.serviceWorker.register('/firebase-messaging-sw.js'),
       })
 
-      console.log(token)
-
       return token ?? null
     } catch (error) {
       console.error('FCM error:', error)

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { InformasiIuran } from '@/types/api/informasi-iuran';
+
 const emit = defineEmits<{
   (e: 'reload'): void;
   (e: 'close'): void;
@@ -7,7 +9,7 @@ const emit = defineEmits<{
 const props = withDefaults(defineProps<{
   isShow: boolean
   isEdit: boolean
-  item?: object | null
+  item?: InformasiIuran | null
 }>(), {
   isShow: false,
   isEdit: false,
@@ -16,10 +18,10 @@ const props = withDefaults(defineProps<{
 const form = ref(null)
 
 const defaultParams = {
-  judul: '',
-  jenis_iuran: null,
-  periode: null,
-  keterangan: '',
+  judul: '' as string | undefined,
+  jenis_iuran: null as string | null | undefined,
+  periode: null as string | null | undefined,
+  keterangan: '' as string | undefined,
   status_aktif: '',
 }
 const params = reactive({...defaultParams})
@@ -53,17 +55,9 @@ const rules = {
   },
 }
 
-watch(
-  () => params.nama_regu,
-  newVal => {
-    if (!newVal) return
-    params.nama_regu = newVal.toUpperCase()
-  }
-)
-
 const handleClose = () => {
-  form.value?.reset()
-  
+  (form.value as any)?.reset()
+
   emit('close')
 }
 
@@ -72,10 +66,10 @@ watch(
   newVal => {
     if (!newVal) return
 
-    params.judul = props.item?.info
-    params.jenis_iuran = props.item?.nama
-    params.periode = props.item?.nama
-    params.keterangan = props.item?.info
+    params.judul = props.item?.judul_iuran
+    params.jenis_iuran = props.item?.jenis_iuran
+    params.periode = props.item?.periode
+    params.keterangan = props.item?.keterangan
   }
 )
 

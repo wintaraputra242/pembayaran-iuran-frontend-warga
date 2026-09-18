@@ -25,9 +25,13 @@ export interface InformasiIuran {
   bulan_approved?: number[]
   bulan_pending?: number[]
   bulan_rejected?: number[]
+  bulan_cancelled?: number[]
+  bulan_mulai_bayar?: number
+  bulan_maksimal_bayar?: number
   total_bulan_approved?: number
   total_bulan_pending?: number
   total_bulan_terhitung?: number
+  total_bulan_wajib?: number
 }
 
 export interface GetInformasiIuranResponse {
